@@ -12,8 +12,8 @@ import numpy as np
 import rospy
 
 from std_msgs.msg import String
-from mti_panda_controller_msgs.msg import PDControllerGoal8
-from mti_panda_controller_msgs.msg import RobotState8
+from panda_msgs_mti.msg import PDControllerGoal8
+from panda_msgs_mti.msg import RobotState8
 
 # global variables
 pandaRobotState = RobotState8()

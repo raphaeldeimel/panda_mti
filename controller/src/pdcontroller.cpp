@@ -27,7 +27,7 @@ std::array<double, 7> limitRate(const std::array<double, 7>& max_derivatives,
 
 
 /* Callback Handler to get desired Joints from promp Motion Generator */
-void PDController::callbackPDControllerGoal(const mti_panda_controller_msgs::PDControllerGoal8::ConstPtr& msg)
+void PDController::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg)
 {
 
     //internalize data:
@@ -73,7 +73,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     pModel = new franka::Model(robot.loadModel());
     initial_state = robot.readOnce();
 
-    common_state_publisher = rosnode.advertise<mti_panda_controller_msgs::RobotState8>("/panda/currentstate", 10);
+    common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("/panda/currentstate", 10);
 
     pdcontroller_goal_listener_ = rosnode.subscribe("/panda/pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
     
@@ -153,7 +153,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
 
     if (state_culling_count-- <= 0) {
         state_culling_count = publisher_culling_amount;
-        mti_panda_controller_msgs::RobotState8 statemsg = mti_panda_controller_msgs::RobotState8();
+        panda_msgs_mti::RobotState8 statemsg = panda_msgs_mti::RobotState8();
         statemsg.stamp = ros::Time::now();
         statemsg.mode = (int)robot_state.robot_mode;
         for (int i=0;i<dofs;i++) { statemsg.q[i]   = q_.coeff(i);}

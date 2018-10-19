@@ -36,7 +36,7 @@ private:
     const int publisher_culling_amount  = 10;  //the factor to reduce ros publishing to avoid taxing the realtime-ness
     int state_culling_count = 0;
     ros::Publisher common_state_publisher;
-    //mti_panda_controller_msgs::RobotState robotstatemsg_;
+    //panda_msgs_mti::RobotState robotstatemsg_;
     const int publish_every_n_ = 25; //publish at a rate of 40Hz
     int publish_in_count = 0;
 

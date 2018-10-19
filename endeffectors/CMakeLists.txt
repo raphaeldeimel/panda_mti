@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(catkin REQUIRED COMPONENTS
   std_msgs
-  mti_panda_controller_msgs 
+  panda_msgs_mti 
   pluginlib
   message_generation
   roscpp
@@ -29,7 +29,7 @@ catkin_package(
   LIBRARIES softhandmapper    
   CATKIN_DEPENDS
     std_msgs
-    mti_panda_controller_msgs
+    panda_msgs_mti
     pluginlib
     roscpp
 )

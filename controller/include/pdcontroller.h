@@ -2,7 +2,7 @@
 #pragma once
 
 #include <controllerinterface.h>
-#include <mti_panda_controller_msgs/PDControllerGoal8.h> //ros message types
+#include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
 
 class PDController : public ControllerInterface 
 {
@@ -69,7 +69,7 @@ protected:
 
 
     //ROS Message callback
-    void callbackPDControllerGoal(const mti_panda_controller_msgs::PDControllerGoal8::ConstPtr& msg);
+    void callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg);
 
     //limits rates of change of position and velocity received from ros
     bool limit_desired_motion();
@@ -131,7 +131,7 @@ protected:
     std::array<double, dofs> sent_torques_array_;
     DOFVectorMapped tau_cmd; // is to be commanded
 
-    //mti_panda_controller_msgs::RobotState robotstatemsg_;
+    //panda_msgs_mti::RobotState robotstatemsg_;
     const int publish_every_n_ = 25; //publish at a rate of 40Hz
     int publish_in_count = 0;
 

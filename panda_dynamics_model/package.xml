@@ -40,7 +40,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend> mti_panda_controller_msgs </buildtool_depend>
+  <buildtool_depend> panda_msgs_mti </buildtool_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

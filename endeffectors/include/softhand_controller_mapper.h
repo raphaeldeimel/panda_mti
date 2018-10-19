@@ -12,8 +12,8 @@
 //ros includes
 #include "ros/ros.h"
 #include <ros/time.h>
-#include <mti_panda_controller_msgs/PDControllerGoal8.h> //ros message types
-#include <mti_panda_controller_msgs/RobotState8.h>
+#include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
+#include <panda_msgs_mti/RobotState8.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Float64MultiArray.h>
 
@@ -66,7 +66,7 @@ private:
     ros::Publisher softhand_commander;
 
 
-    void callbackPDControllerGoal(const mti_panda_controller_msgs::PDControllerGoal8::ConstPtr& msg);
+    void callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg);
     void callbackSofthandPressures(const std_msgs::Float64MultiArray& msg);
 
     double dt;

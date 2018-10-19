@@ -14,8 +14,8 @@
 //ros includes
 #include "ros/ros.h"
 #include <ros/time.h>
-#include <mti_panda_controller_msgs/PDControllerGoal8.h> //ros message types
-#include <mti_panda_controller_msgs/RobotState8.h>
+#include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
+#include <panda_msgs_mti/RobotState8.h>
 #include <sensor_msgs/JointState.h>
 
 
@@ -43,7 +43,7 @@ private:
     franka::GripperState gripper_state;
 
     ros::Subscriber pdcontroller_goal_listener_;
-    void callbackPDControllerGoal(const mti_panda_controller_msgs::PDControllerGoal8::ConstPtr& msg);
+    void callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg);
 
     double dt;
     double invDt;

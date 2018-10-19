@@ -17,7 +17,7 @@
 #include <ros/ros.h>
 #include <ros/time.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <mti_panda_controller_msgs/RobotState8.h>
+#include <panda_msgs_mti/RobotState8.h>
 #include <sensor_msgs/JointState.h>
 
 

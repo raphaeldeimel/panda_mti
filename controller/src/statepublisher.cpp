@@ -30,7 +30,7 @@ ROSPublishingController::ROSPublishingController(franka::Robot& robot, std::stri
     current_state = robot.readOnce();
     initial_state = current_state;
     
-    common_state_publisher = rosnode.advertise<mti_panda_controller_msgs::RobotState8>("/panda/currentstate", 10);
+    common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("/panda/currentstate", 10);
 
     grippernonblocking::startGripperCommunicationInBackground(hostname);
     grippernonblocking::setGripperDesired(grippernonblocking::q_max,0.0);
@@ -60,7 +60,7 @@ void ROSPublishingController::service(const franka::RobotState& robot_state, con
 
     if (state_culling_count-- <= 0) {
         state_culling_count = publisher_culling_amount;
-        mti_panda_controller_msgs::RobotState8 statemsg = mti_panda_controller_msgs::RobotState8();
+        panda_msgs_mti::RobotState8 statemsg = panda_msgs_mti::RobotState8();
         statemsg.stamp = ros::Time::now();
         statemsg.mode = (int)robot_state.robot_mode;
         for (int i=0;i<dofs;i++) { statemsg.q[i]   = robot_state.q[i];}

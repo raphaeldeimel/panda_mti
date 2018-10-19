@@ -18,7 +18,7 @@
   <build_export_depend>message_runtime</build_export_depend>
 
 
-  <depend>mti_panda_controller_msgs</depend>
+  <depend>panda_msgs_mti</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
 

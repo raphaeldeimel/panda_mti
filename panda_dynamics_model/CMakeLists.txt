@@ -10,7 +10,7 @@ project(panda_dynamics_model)
 find_package(catkin REQUIRED
   rospy
   std_msgs
-  mti_panda_controller_msgs
+  panda_msgs_mti
 #  message_generation
 )
 

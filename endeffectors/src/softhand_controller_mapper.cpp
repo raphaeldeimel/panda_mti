@@ -15,7 +15,7 @@ void exithandler(int s){
 
 
 
-void GripperMapper::callbackPDControllerGoal(const mti_panda_controller_msgs::PDControllerGoal8::ConstPtr& msg) 
+void GripperMapper::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg) 
 {
 
     //internalize data:

@@ -4,7 +4,7 @@
 #include <controllerinterface.h>
 #include <pdcontroller.h>
 
-#include <mti_panda_controller_msgs/PDControllerGoal8.h> //ros message types
+#include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
 
 class PDControllerGripper : public PDController
 {

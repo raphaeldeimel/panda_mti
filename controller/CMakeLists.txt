@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
 find_package(catkin REQUIRED COMPONENTS
-  mti_panda_controller_msgs 
+  panda_msgs_mti 
   roscpp
   rospy
 )
@@ -21,7 +21,7 @@ find_package(Franka 0.3.0 REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS
-    mti_panda_controller_msgs
+    panda_msgs_mti
     roscpp
 )
 
@@ -35,7 +35,7 @@ add_executable(pdcontroller
   
 )
 add_dependencies(pdcontroller 
-    mti_panda_controller_msgs_generate_messages_cpp
+    panda_msgs_mti_generate_messages_cpp
 )
 target_link_libraries(pdcontroller PUBLIC
   Franka::Franka
@@ -60,7 +60,7 @@ add_executable(pdcontroller_gripper
   
 )
 add_dependencies(pdcontroller_gripper 
-    mti_panda_controller_msgs_generate_messages_cpp
+    panda_msgs_mti_generate_messages_cpp
 )
 target_link_libraries(pdcontroller_gripper PUBLIC
   Franka::Franka
@@ -85,7 +85,7 @@ add_executable(statepublisher
   src/statepublisher.cpp
 )
 add_dependencies(statepublisher 
-    mti_panda_controller_msgs_generate_messages_cpp
+    panda_msgs_mti_generate_messages_cpp
 )
 target_link_libraries(statepublisher PUBLIC
   Franka::Franka
