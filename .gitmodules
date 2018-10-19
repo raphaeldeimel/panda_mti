@@ -1,9 +1,0 @@
-[submodule "franka_ros"]
-	path = franka_ros
-	url = https://github.com/frankaemika/franka_ros.git
-[submodule "python-libfranka"]
-	path = python-libfranka
-	url = git@gitlab.tubit.tu-berlin.de:mti-engage/python-libfranka.git
-[submodule "libfranka"]
-	path = libfranka
-	url = https://github.com/raphaeldeimel/libfranka.git
