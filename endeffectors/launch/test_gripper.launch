@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+  <arg name="gripper_type" default="softhand" />
+  <arg name="hostname" default="panda" />
+  <arg name="publish_rate" default="30" />
+  <arg name="pnsofthand" default="true"/>
+
+
+  <node if="$(arg pnsofthand)"   name="softhandmapper" pkg="mti_panda_gripper" type="softhandmapper" required="true"  output="screen"/>
+  <node if="$(arg pnsofthand)"   name="mti_pdcontrollergoal_publisher" pkg="mti_panda_gripper" type="mti_pdcontrollergoal_publisher.py" required="true"  output="screen"/>
+
+</launch>

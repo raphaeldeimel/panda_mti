@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>controller_panda_mti</name>
+  <version>0.1.0</version>
+  <description>Provides a joint-space PD controller for Franka Panda (using libfranka) with ROS interface</description>
+
+  <maintainer email="info@mti-engage.tu-berlin.de">MTI-engAge</maintainer>
+  <license>Apache 2.0</license>
+
+  <url type="website">mti-engage.tu-berlin.de</url>
+  <url type="repository">mti-engage.tu-berlin.de</url>
+  <url type="bugtracker">mti-engage.tu-berlin.de</url>
+  <author>MTI</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>eigen</build_depend>
+
+
+  <build_export_depend>message_runtime</build_export_depend>
+
+  <depend>mti_panda_controller_msgs</depend>
+  <depend>realtime_tools</depend>
+  <depend>roscpp</depend>
+
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>rospy</exec_depend>
+
+
+</package>
