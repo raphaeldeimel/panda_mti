@@ -72,6 +72,7 @@ franka::Torques callbackControl(const franka::RobotState& robot_state, franka::D
 //callback wrapper for franka control
 bool callbackRead(const franka::RobotState& robot_state) 
 {
+
     struct timespec t_start;
     clock_gettime(CLOCK_REALTIME, &t_start);
 
@@ -86,9 +87,11 @@ bool callbackRead(const franka::RobotState& robot_state)
     int usecs = nsecs / 1000;
     if (usecs > 300) {std::cout << "Warning: The control loop's service() took longer than "<< usecs  <<" us!" << std::endl;}
     
-    
-    
-    return (not exitrequested);
+    if (robot_state.robot_mode == franka::RobotMode::kUserStopped) {
+        return false;
+    } else {
+        return (not exitrequested);
+    }
 }
 
 
@@ -105,36 +108,37 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
     std::signal(SIGINT, exithandler); //register AFTER franka::Robot
 
 
-
-
     //Keep running depending on the panda state, 
     do {
+        robot_state = robot.readOnce();
+        robotmode = robot_state.robot_mode;
         if (robotmode == franka::RobotMode::kIdle) {
             // start real-time control loop
             std::cout << "Starting Control"<< std::endl;
             currentController->onStart();
-            try {
             /* --> HERE WE HAVE THE LIBFRANKA-Controller-LOOP that executes MTI PDController <-- */
                 if (currentController->isTorqueController()) {
-                    robot.control( callbackControl );
+                    try {
+                        robot.control( callbackControl );  /* control always exits via an exception*/
+                    } catch (const franka::ControlException& ex) {  //when e.g. pressing the stop button, control exits via an exception
+                        ;
+                    }
                 } else {
                     robot.read( callbackRead ); //fallback: only provide current values and no control
                 }
-            /* we leave it, if the controller stops or an exeption occures */
-                
-            } catch (const franka::ControlException& ex) {  //when e.g. pressing the stop button, control exits via an exception
-                std::cout << "Stopping Control"<< std::endl;
-            }
-        } 
-        idleLoopRate.sleep();
-        robot_state = robot.readOnce();
-        currentController->service(robot_state, idlePeriod);
-        robotmode = robot_state.robot_mode;
-        if (exitrequested) {
-            return 0;
+            std::cout << "Stopping Control"<< std::endl;
+        } else if (robotmode == franka::RobotMode::kGuiding) {
+            std::cout << "Guiding Active"<< std::endl;
+            robot.read( callbackRead );
+            std::cout << "Guiding Stopped"<< std::endl;
+        } else if (robotmode == franka::RobotMode::kUserStopped) {
+            currentController->service(robot_state, idlePeriod);
+            idleLoopRate.sleep();
+        } else {
+            break; //any other mode -> quit
         }
-    } while (robotmode == franka::RobotMode::kIdle || robotmode == franka::RobotMode::kUserStopped || robotmode == franka::RobotMode::kOther);  //kOther: active when brakes are engaged
-    std::cout << "Robot in mode: ";
+    } while (not exitrequested);
+    std::cout << "Leaving robot in mode: ";
     switch (robotmode) {
         case franka::RobotMode::kOther:
             std::cout << "kOther";
