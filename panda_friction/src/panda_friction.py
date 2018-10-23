@@ -12,8 +12,8 @@ import numpy as np
 import rospy
 
 from std_msgs.msg import String
-from panda_msgs_mti.msg import PDControllerGoal8
-from panda_msgs_mti.msg import RobotState8
+from mti_panda_controller_msgs.msg import PDControllerGoal8
+from mti_panda_controller_msgs.msg import RobotState8
 
 # global variables
 pandaRobotState = RobotState8()
@@ -22,8 +22,8 @@ robotStatesAvailable = False
 
 # update robot states
 def robotHandler(states):
-	robotStatesAvailable = True
-	pandaRobotState = states
+    robotStatesAvailable = True
+    pandaRobotState = states
 
 
 
@@ -33,12 +33,11 @@ def followTraj():
 	# goal publisher
     goal_pub = rospy.Publisher('/pdcontroller_goal', PDControllerGoal8, queue_size=10)
 	# publishes the motion phases
-	state_pub = rospy.Publisher('/panda_state_pub', String, queue_size=10)
+    state_pub = rospy.Publisher('/panda/friction/state_pub', String, queue_size=10)
 	# reads the joint robot states of the robot
     rospy.Subscriber("/panda/currentstate", RobotState8, robotHandler)
 	#ROS main node
     rospy.init_node('panda_friction_node', anonymous=True)
-
 
 	#----- INIT -----
     # motion variables
@@ -55,7 +54,7 @@ def followTraj():
     jtTraj.position = np.zeros(8);
     jtTraj.velocity = np.zeros(8);
     jtTraj.kp = np.zeros(8);
-    jtTraj.kd = np.zeros(8);
+    jtTraj.kv = np.zeros(8);
 
     phaseIndex = 0
     phaseState = [
@@ -106,39 +105,45 @@ def followTraj():
         10] # joint7
 
 	# ----- HOMING -----
-	time.sleep(1)
+    time.sleep(1)
 	# exit program if joint states are not published
-	if not jointStatesAvailable:
-    	quit()
+    if not robotStatesAvailable:
+        print("error: no robot states available, quiting...")
+        quit()
 
 	# position interpolation
 
 
 
     # Homing all / step trajectory
+	"""
     for i in range(0,7):
         if not i == desired_joint-1:
             jtTraj.position[i] = jointStaticPose[i][desired_joint-1]
         else:
             jtTraj.position[i] = jLimits[i][0]
         jtTraj.kp[i] = jointKP[i]
-
     goal_pub.publish(jtTraj)
     state_pub.publish(phaseState[0]) # homing
 
-    time.sleep(5)
+	"""
+
+    # time.sleep(5)
 
     rate = rospy.Rate(25) # 25 Hz
+    print("hallo")
+    rospy.loginfo("publishing")
 	# main control loop
     while not rospy.is_shutdown():
-
+        pass
         # publish new gaol for the desired joint
-        goal_pub.publish(jtTraj)
-        state_pub.publish(phaseState[phaseIndex])
+        # goal_pub.publish(jtTraj)
+        # state_pub.publish(phaseState[phaseIndex])
 
         rate.sleep()
 
 
 
 if __name__ == '__main__':
-	followTraj()
+    print("asd")
+    followTraj()
