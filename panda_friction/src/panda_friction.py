@@ -3,10 +3,9 @@
 """
 Created on Mon Oct  1 15:57:14 2018
 
-@author: mti
+@author: alexander
 """
 
-# license removed for brevity
 import time
 import numpy as np
 import rospy
@@ -145,5 +144,4 @@ def followTraj():
 
 
 if __name__ == '__main__':
-    print("asd")
     followTraj()
