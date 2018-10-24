@@ -9,17 +9,17 @@
   <param if="$(arg for_real)" name="panda_hostname" value="panda1"/>
   
   
-  <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm.urdf.xacro"/>
-  <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
+  <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm.urdf.xacro"/>
+  <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
 
 
   <node     if="$(arg for_real)"   name="pdcontroller_gripper" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="pdcontroller_gripper" required="true"  output="screen"/>
 
   
 
-  <node unless="$(arg for_real)" name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-    <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" />
-    <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" />
+  <node unless="$(arg for_real)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" />
+    <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro '$(find franka_description)/robots/panda_arm.urdf.xacro'" />
     <param  if="$(arg load_gripper)" name="publish_default_positions" value="true" />
   </node>
 <!--  <node unless="$(arg for_real)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find phastapromp)/launch/runBehavior.rviz"/>-->
