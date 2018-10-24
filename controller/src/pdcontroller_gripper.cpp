@@ -47,7 +47,7 @@ franka::Torques PDControllerGripper::update(const franka::RobotState& robot_stat
 {
     gripper_q =  grippernonblocking::getGripperPosition();
     franka::Torques t = PDController::update(robot_state, period);
-    grippernonblocking::setGripperDesired(qd_[7], 10.0); // taud_[7]
+    grippernonblocking::setGripperDesired(rosGripperQd, 10.0); // taud_[7]
     return t;
 }
 
