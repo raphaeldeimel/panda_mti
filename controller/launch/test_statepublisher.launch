@@ -13,7 +13,7 @@
   <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
 
 
-  <node     if="$(arg for_real)"   name="pdcontroller_gripper" pkg="mti_panda_pdcontroller"   launch-prefix="chrt -f 40"  type="statepublisher" required="true"  output="screen"/>
+  <node     if="$(arg for_real)"   name="pandastate_publisher" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="statepublisher" required="true"  output="screen"/>
 
   
 
