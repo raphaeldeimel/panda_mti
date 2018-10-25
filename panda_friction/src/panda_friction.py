@@ -18,21 +18,19 @@ class frictionMeasurement:
     def __init__(self, joint_d, q_d):
         rospy.init_node('panda_friction_node', anonymous=True)
         rospy.loginfo("init")
+        self.controllerGoal = PDControllerGoal8()
         self.pandaRobotState = RobotState8()
         self.robotStatesAvailable = False
 
-        self.phaseIndex = 0
-        self.phaseState = ['homing', 'acc', 'rec', 'dec', 'stop']
+        self.phaseState = ['homing', 'acceleration', 'recording', 'deceleration', 'stop']
 
-        self.homingTime = 2
+        self.homingTime = 6
         self.desired_dot_q = q_d
         self.desired_joint = joint_d
-
-        self.jointSafetyOffset = 0.1
-
         self.trajSize = (8, 25*self.homingTime)
         self.interpDesiredTraj = np.zeros(self.trajSize)
 
+        self.jointSafetyOffset = 0.1
         self.jLimits = [
                 [-2.89 + self.jointSafetyOffset, +2.89 - self.jointSafetyOffset], # j1
                 [-1.76 + self.jointSafetyOffset, +1.76 - self.jointSafetyOffset],
@@ -53,8 +51,12 @@ class frictionMeasurement:
                 [+3.14, +2.73, +3.14, +1.54, +3.14, +0.00, +3.14],
                 [+0.00, +0.00, +0.00, +0.00, +0.00, +0.90, +2.89]] # j7
 
-        self.jointKP = [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0] # [j1 ... j7]
-        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 10.0, 10.0] # [j1 ... j7]
+        self.jointKP = [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 0.00] # [j1 ... j7]
+        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 10.0, 10.0, 0.00] # [j1 ... j7]
+
+        # position control
+        self.jointKP_home = [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 0.00]
+        self.jointKV_home = [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00]
 
         self.startROS()
 
@@ -64,10 +66,13 @@ class frictionMeasurement:
         self.pandaRobotState = states
 
 
-    def getHomeTraj(self):
+    def goHome(self):
         # interpolates joint position between actual value and desired start position
         for i in range(7):
             self.interpDesiredTraj[i] = np.linspace(self.pandaRobotState.q[i], self.jointHomePose[i][self.desired_joint], self.trajSize[1])
+        # moving to start position
+        self.controllerGoal.kp = self.jointKP_home
+        self.controllerGoal.kv = self.jointKV_home
 
 
     def getMoveTraj(self):
@@ -76,28 +81,48 @@ class frictionMeasurement:
 
 
     def startROS(self):
-        self.goal_pub = rospy.Publisher('/pdcontroller_goal', PDControllerGoal8, queue_size=10)
-        state_pub = rospy.Publisher('/panda/friction/state_pub', String, queue_size=10)
+        self.goal_pub = rospy.Publisher('/panda/pdcontroller_goal', PDControllerGoal8, queue_size=10)
+        self.state_pub = rospy.Publisher('/panda/friction/state_pub', String, queue_size=10)
         rospy.Subscriber("/panda/currentstate", RobotState8, self.robotStateHandler)
         rospy.init_node('panda_friction_node', anonymous=True)
 
+        _state = 0
+        _printOnce = True
+
         rospy.loginfo("waiting for pdcontroller...")
-        time.sleep(2)
+        time.sleep(1)
 
         if not self.robotStatesAvailable:
             print("error: no robot states available, quiting...")
             quit()
 
-        self.getHomeTraj()
+        self.goHome()
         # for loop for homing
 
         rate = rospy.Rate(25) # 25 Hz
+        localIndex = 0
 
-        rospy.loginfo("recording...")
+        rospy.loginfo("measurement running...")
 	       # main control loop
         while not rospy.is_shutdown():
-            print(self.pandaRobotState)
-            pass
+            if _state == 0: # homing
+                self.controllerGoal.position = self.interpDesiredTraj[:,localIndex]
+                localIndex += 1
+                if localIndex >= len(self.interpDesiredTraj[0]):
+                    _state += 1
+                    _printOnce = True
+
+            if _state == 1: # acc
+                pass
+
+            if _printOnce:
+                rospy.loginfo(self.phaseState[_state])
+                self.state_pub.publish(self.phaseState[_state])
+                _printOnce = False
+
+            # desired state publisher
+            self.controllerGoal.stamp = rospy.Time.now()
+            self.goal_pub.publish(self.controllerGoal)
             rate.sleep()
 
 
