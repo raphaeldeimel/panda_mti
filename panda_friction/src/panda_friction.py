@@ -51,12 +51,8 @@ class frictionMeasurement:
                 [+3.14, +2.73, +3.14, +1.54, +3.14, +0.00, +3.14],
                 [+0.00, +0.00, +0.00, +0.00, +0.00, +0.90, +2.89]] # j7
 
-        self.jointKP = [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 0.00] # [j1 ... j7]
-        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 10.0, 10.0, 0.00] # [j1 ... j7]
-
-        # position control
-        self.jointKP_home = [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 0.00]
-        self.jointKV_home = [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00]
+        self.jointKP = [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 0.00]
+        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 10.0, 10.0, 0.00]
 
         self.startROS()
 
@@ -66,17 +62,18 @@ class frictionMeasurement:
         self.pandaRobotState = states
 
 
-    def goHome(self):
+    def goHomeTraj(self):
         # interpolates joint position between actual value and desired start position
         for i in range(7):
             self.interpDesiredTraj[i] = np.linspace(self.pandaRobotState.q[i], self.jointHomePose[i][self.desired_joint], self.trajSize[1])
         # moving to start position
-        self.controllerGoal.kp = self.jointKP_home
-        self.controllerGoal.kv = self.jointKV_home
+        self.controllerGoal.kp = self.jointKP
+        self.controllerGoal.kv = np.zeros(8)
 
 
-    def getMoveTraj(self):
-        rospy.loginfo("moving...")
+    def getRecTraj(self):
+        self.controllerGoal.kp[self.desired_joint] = 0.0
+        self.controllerGoal.kv = self.jointKV
         pass
 
 
@@ -88,6 +85,7 @@ class frictionMeasurement:
 
         _state = 0
         _printOnce = True
+        _updateTraj = True
 
         rospy.loginfo("waiting for pdcontroller...")
         time.sleep(1)
@@ -96,8 +94,7 @@ class frictionMeasurement:
             print("error: no robot states available, quiting...")
             quit()
 
-        self.goHome()
-        # for loop for homing
+
 
         rate = rospy.Rate(25) # 25 Hz
         localIndex = 0
@@ -105,14 +102,25 @@ class frictionMeasurement:
         rospy.loginfo("measurement running...")
 	       # main control loop
         while not rospy.is_shutdown():
-            if _state == 0: # homing
+            # ------------------- HOMING PHASE ---------------------------------
+            if _state == 0:
+                # generates pd-controller-goal for homing phase
+                if _updateTraj
+                    self.goHomeTraj()
+                    _updateTraj = False
+
                 self.controllerGoal.position = self.interpDesiredTraj[:,localIndex]
                 localIndex += 1
                 if localIndex >= len(self.interpDesiredTraj[0]):
                     _state += 1
                     _printOnce = True
+                    _updateTraj = True
 
+            # -------------- ACCELERATION/RECORDING PHASE-----------------------
             if _state == 1: # acc
+                # generates pd-controller-goal for acceleration/recording phase
+                if _updateTraj
+                    self.getRecTraj()
                 pass
 
             if _printOnce:
