@@ -33,10 +33,11 @@ class frictionMeasurement(object):
                             'deceleration',
                             'stop']
 
-        self.homingTime = 1
+        self.homingTime = 6
         self.desired_acc_time = 1  # secs to get desired speed
         self.desired_dot_q = q_d
         self.desired_joint = joint_d-1
+        self.delayAfterHoming = 2  # [sec]
         self.trajSize = (8, 25*self.homingTime)
         self.velTrajSize = (int(25*self.desired_dot_q))
         self.interpDesiredTraj = np.zeros(self.trajSize)
@@ -82,7 +83,10 @@ class frictionMeasurement(object):
                 self.jointHomePose[i][self.desired_joint],
                 self.trajSize[1],
                 endpoint=True)
-        self.interpDesiredTraj = np.hstack((self.interpDesiredTraj, np.tile(self.interpDesiredTraj[:, [-1]], 25)))
+        self.interpDesiredTraj = np.hstack((
+                                    self.interpDesiredTraj,
+                                    np.tile(self.interpDesiredTraj[:, [-1]],
+                                    int(25*self.delayAfterHoming))))
         # moving to start position
         self.controllerGoal.kp = self.jointKP
         self.controllerGoal.kv = np.zeros(8)
@@ -198,8 +202,8 @@ class frictionMeasurement(object):
                 _printOnce = False
 
             # desired state publisher
-            # self.controllerGoal.stamp = rospy.Time.now()
-            # self.goal_pub.publish(self.controllerGoal)
+            self.controllerGoal.stamp = rospy.Time.now()
+            self.goal_pub.publish(self.controllerGoal)
             rate.sleep()
 
 
