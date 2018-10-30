@@ -109,8 +109,8 @@ class frictionMeasurement(object):
 
     def decelDistanceReached(self):
         """Check if limits are reached."""
-        decelDistance = 0.5*self.desired_dot_q*self.desired_acc_time
-        if (self.pandaRobotState.q[self.desired_joint] < (self.jLimits[self.desired_joint][0] + decelDistance)):
+        decelDistance = abs(0.5*self.desired_dot_q*self.desired_acc_time)
+        if self.pandaRobotState.q[self.desired_joint] < (self.jLimits[self.desired_joint][0] + decelDistance):
             return True
         else:
             return False
@@ -202,12 +202,12 @@ class frictionMeasurement(object):
                 _printOnce = False
 
             # desired state publisher
-            # self.controllerGoal.stamp = rospy.Time.now()
-            # self.goal_pub.publish(self.controllerGoal)
+            self.controllerGoal.stamp = rospy.Time.now()
+            self.goal_pub.publish(self.controllerGoal)
             rate.sleep()
 
 
 if __name__ == '__main__':
-    joint = 1  # j1 - j7
+    joint = 7  # j1 - j7
     q_dot_desired = -1*0.8  # rad/s
     frictionObj = frictionMeasurement(joint, q_dot_desired)
