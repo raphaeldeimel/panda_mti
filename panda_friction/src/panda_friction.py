@@ -7,16 +7,26 @@ Created on Mon Oct  1 15:57:14 2018
 """
 
 import time
-import numpy as np
-import rospy
 
-from std_msgs.msg import String
+import numpy as np
+
+import rospy
 from panda_msgs_mti.msg import PDControllerGoal8, RobotState8
+from std_msgs.msg import String
 
 
 class frictionMeasurement(object):
 
-    """class defintion - friction measurement of a franka robot panda."""
+    """Friction measurement of a franka robot panda.
+
+    Be careful. The motion of the joints is not synchronized. Self collision
+    is possible. Please move the robot to the approximate start position.
+    q1, q3, q5, q7 have the same start position (setup 1).
+    q2 have setup 2
+    q4 and q6 use the setup 3
+
+    The joint setups can be found in the jointHomePose list.
+    """
 
     def __init__(self, joint_d, q_d):
         """Init function."""
@@ -35,11 +45,13 @@ class frictionMeasurement(object):
 
         self.homingTime = 6
         self.desired_acc_time = 1  # secs to get desired speed
-        self.desired_dot_q = q_d
+        self.desired_decel_time = 0.5
+        self.desired_dot_q = -q_d
         self.desired_joint = joint_d-1
-        self.delayAfterHoming = 2  # [sec]
+        self.delay_after_homing = 3  # [sec]
         self.trajSize = (8, 25*self.homingTime)
-        self.velTrajSize = (int(25*abs(self.desired_dot_q)))
+        self.velTrajSize = (int(25*self.desired_acc_time))
+        self.decelTrajSize = (int(25*self.desired_decel_time))
         self.interpDesiredTraj = np.zeros(self.trajSize)
         self.interpAccTrajPhase = np.zeros(self.velTrajSize)
         self.interpDecelTrajPhase = np.zeros(self.velTrajSize)
@@ -49,7 +61,7 @@ class frictionMeasurement(object):
                         [-2.89 + self.jtOff, +2.89 - self.jtOff],  # j1
                         [-1.76 + self.jtOff, +1.76 - self.jtOff],
                         [-2.89 + self.jtOff, +2.89 - self.jtOff],
-                        [-3.07 + self.jtOff, -0.06 - self.jtOff],
+                        [-3.07 + self.jtOff, -0.06 - self.jtOff/2],
                         [-2.89 + self.jtOff, +2.89 - self.jtOff],
                         [-0.01 + self.jtOff, +3.75 - self.jtOff],
                         [-2.89 + self.jtOff, +2.89 - self.jtOff]]  # j7
@@ -60,13 +72,13 @@ class frictionMeasurement(object):
                 [self.jLimits[0][1], +0.00,              +0.00,              +0.00,              +0.00,              +0.00,              +0.00],  # j1
                 [+0.00,              self.jLimits[1][1], +0.00,              +1.54,              +0.00,              +1.54,              +0.00],
                 [+0.00,              +1.54,              self.jLimits[2][1], +1.54,              +0.00,              +1.54,              +0.00],
-                [self.jLimits[3][1], -2.73,              self.jLimits[3][1], self.jLimits[3][1], self.jLimits[3][1], self.jLimits[3][1], self.jLimits[3][1]],
+                [self.jLimits[3][1], -2.73,              self.jLimits[3][1], self.jLimits[3][1], self.jLimits[3][1], -1.80,              self.jLimits[3][1]],
                 [+0.00,              +0.00,              +0.00,              +0.00,              self.jLimits[4][1], +0.00,              +0.00],
-                [+3.14,              +2.73,              +3.14,              +1.54,              +3.14,              +0.00,              +3.14],
+                [+3.14,              +2.73,              +3.14,              +1.54,              +3.14,              self.jLimits[5][1], +3.14],
                 [+0.00,              +0.00,              +0.00,              +0.00,              +0.00,              +0.90,              self.jLimits[6][1]]]  # j7
 
-        self.jointKP = [30.0, 30.0, 30.0, 30.0, 30.0, 20.0, 20.0, 0.00]
-        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 10.0, 10.0, 0.00]
+        self.jointKP = [40.0, 40.0, 40.0, 40.0, 40.0, 20.0, 20.0, 0.00]
+        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 20.0, 20.0, 0.00]
 
         self.startROS()
 
@@ -86,7 +98,7 @@ class frictionMeasurement(object):
         self.interpDesiredTraj = np.hstack((
                                     self.interpDesiredTraj,
                                     np.tile(self.interpDesiredTraj[:, [-1]],
-                                    int(25*self.delayAfterHoming))))
+                                    int(25*self.delay_after_homing))))
         # moving to start position
         self.controllerGoal.kp = self.jointKP
         self.controllerGoal.kv = np.zeros(8)
@@ -105,11 +117,16 @@ class frictionMeasurement(object):
                                                 self.velTrajSize,
                                                 endpoint=True)
         # deceleration phase
-        self.interpDecelTrajPhase = self.interpAccTrajPhase[::-1]
+        self.interpDecelTrajPhase = np.linspace(
+                                                self.desired_dot_q,
+                                                0.0,
+                                                self.decelTrajSize,
+                                                endpoint=True)
+        # self.interpDecelTrajPhase = self.interpAccTrajPhase[::-1]
 
     def decelDistanceReached(self):
         """Check if limits are reached."""
-        decelDistance = abs(0.5*self.desired_dot_q*self.desired_acc_time)
+        decelDistance = abs(0.5*self.desired_dot_q*self.desired_decel_time)+0.5
         if self.pandaRobotState.q[self.desired_joint] < (self.jLimits[self.desired_joint][0] + decelDistance):
             return True
         else:
@@ -131,7 +148,10 @@ class frictionMeasurement(object):
                         self.robotStateHandler)
 
         rospy.init_node('panda_friction_node', anonymous=True)
+        self.runMeasurement()
 
+    def runMeasurement(self):
+        """Start the measurment script."""
         _state = 0
         _printOnce = True
         _updateTraj = True
@@ -208,6 +228,6 @@ class frictionMeasurement(object):
 
 
 if __name__ == '__main__':
-    joint = 7  # j1 - j7
-    q_dot_desired = -1*0.8  # rad/s
+    joint = 1  # j1 - j7
+    q_dot_desired = 3  # rad/s
     frictionObj = frictionMeasurement(joint, q_dot_desired)
