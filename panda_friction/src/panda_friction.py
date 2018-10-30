@@ -78,7 +78,7 @@ class frictionMeasurement(object):
                 [+0.00,              +0.00,              +0.00,              +0.00,              +0.00,              +0.90,              self.jLimits[6][1]]]  # j7
 
         self.jointKP = [40.0, 40.0, 40.0, 40.0, 40.0, 20.0, 20.0, 0.00]
-        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 20.0, 20.0, 0.00]
+        self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 20.0, 10.0, 0.00]
 
         self.startROS()
 
@@ -133,7 +133,7 @@ class frictionMeasurement(object):
             return False
 
     def startROS(self):
-        """Start ROS Stuff."""
+        """ROS NODE/TOPICS"""
         self.goal_pub = rospy.Publisher(
                         '/panda/pdcontroller_goal',
                         PDControllerGoal8,
@@ -150,11 +150,13 @@ class frictionMeasurement(object):
         rospy.init_node('panda_friction_node', anonymous=True)
         self.runMeasurement()
 
+    def statePublisher(self, phaseIndex):
+        """Phase handling."""
+        rospy.loginfo(self.phaseState[phaseIndex])
+        self.state_pub.publish(self.phaseState[phaseIndex])
+
     def runMeasurement(self):
-        """Start the measurment script."""
-        _state = 0
-        _printOnce = True
-        _updateTraj = True
+        """Measurment script."""
 
         rospy.loginfo("waiting for pdcontroller...")
         time.sleep(1)
@@ -164,7 +166,10 @@ class frictionMeasurement(object):
             quit()
 
         rate = rospy.Rate(25)  # 25 Hz
-        localIndex = 0
+        _state = 0
+        _printOnce = True
+        _updateTraj = True
+        _localIndex = 0
 
         rospy.loginfo("measurement running...")
 
@@ -175,51 +180,57 @@ class frictionMeasurement(object):
                 # generates pd-controller-goal for homing phase
                 if _updateTraj:
                     self.goHomeTraj()
+                    self.statePublisher(_state)
                     _updateTraj = False
 
-                self.controllerGoal.position = self.interpDesiredTraj[:, localIndex]
-                localIndex += 1
-                if localIndex >= len(self.interpDesiredTraj[0]):
+                self.controllerGoal.position = self.interpDesiredTraj[:, _localIndex]
+                _localIndex += 1
+                if _localIndex >= len(self.interpDesiredTraj[0]):
                     _state += 1  # ready for acceleration
-                    _printOnce = True
                     _updateTraj = True
 
             # -------------- ACCELERATION/RECORDING PHASE ---------------------
             if _state == 1:  # acceleration phase
                 # generates pd-controller-goal for acceleration/recording phase
                 if _updateTraj:
-                    localIndex = 0
+                    _localIndex = 0
                     self.getRecTraj()
+                    self.statePublisher(_state)
                     _updateTraj = False
 
                 self.controllerGoal.position = self.interpDesiredTraj[:, -1]
-                self.controllerGoal.velocity[self.desired_joint] = self.interpAccTrajPhase[localIndex]
-                localIndex += 1
-                if localIndex >= len(self.interpAccTrajPhase):
+                self.controllerGoal.velocity[self.desired_joint] = self.interpAccTrajPhase[_localIndex]
+                _localIndex += 1
+                if _localIndex >= len(self.interpAccTrajPhase):
                     _state += 1  # acceleration done
-                    _printOnce = True
                     _updateTraj = True
 
             # -------------- RECORDING/DECELERATION PHASE ---------------------
             if _state == 2:  # recording phase
                 if _updateTraj:
-                    localIndex = 0
+                    _localIndex = 0
+                    self.statePublisher(_state)
                     _updateTraj = False
 
                 if self.decelDistanceReached():
-                    rospy.loginfo("reached")
-                    self.controllerGoal.velocity[self.desired_joint] = self.interpDecelTrajPhase[localIndex]
-                    localIndex += 1
-                    if localIndex >= len(self.interpDecelTrajPhase):
-                        _state += 1  # deceleration done
-                        _printOnce = True
-                        _updateTraj = True
+                    _state += 1
+                    _updateTraj = True
 
-# ---------------------------------- CONSOLE OUTPUT ---------------------------
-            if _printOnce:
-                rospy.loginfo(self.phaseState[_state])
-                self.state_pub.publish(self.phaseState[_state])
-                _printOnce = False
+            if _state == 3:  # deceleration phase
+                if _updateTraj:
+                    _localIndex = 0
+                    self.statePublisher(_state)
+                    _updateTraj = False
+
+                self.controllerGoal.velocity[self.desired_joint] = self.interpDecelTrajPhase[_localIndex]
+                _localIndex += 1
+                if _localIndex >= len(self.interpDecelTrajPhase):
+                    _state += 1  # deceleration done
+                    _updateTraj = True
+
+            if _state == 4:
+                self.statePublisher(_state)
+                quit()
 
             # desired state publisher
             self.controllerGoal.stamp = rospy.Time.now()
@@ -228,6 +239,6 @@ class frictionMeasurement(object):
 
 
 if __name__ == '__main__':
-    joint = 1  # j1 - j7
-    q_dot_desired = 3  # rad/s
+    joint = 2  # j1 - j7
+    q_dot_desired = 3.0  # rad/s
     frictionObj = frictionMeasurement(joint, q_dot_desired)
