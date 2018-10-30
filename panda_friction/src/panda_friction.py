@@ -39,7 +39,7 @@ class frictionMeasurement(object):
         self.desired_joint = joint_d-1
         self.delayAfterHoming = 2  # [sec]
         self.trajSize = (8, 25*self.homingTime)
-        self.velTrajSize = (int(25*self.desired_dot_q))
+        self.velTrajSize = (int(25*abs(self.desired_dot_q)))
         self.interpDesiredTraj = np.zeros(self.trajSize)
         self.interpAccTrajPhase = np.zeros(self.velTrajSize)
         self.interpDecelTrajPhase = np.zeros(self.velTrajSize)
@@ -57,15 +57,15 @@ class frictionMeasurement(object):
         # column: joint setup for the corresponding measurement
         # rows: joint position (q1 - q7)
         self.jointHomePose = [
-                [+2.89, +0.00, +0.00, +0.00, +0.00, +0.00, +0.00],  # j1
-                [+0.00, +1.76, +0.00, +1.54, +0.00, +1.54, +0.00],
-                [+0.00, +1.54, +2.89, +1.54, +0.00, +1.54, +0.00],
-                [-0.10, -2.73, -0.10, -0.10, -0.10, -0.10, -0.10],
-                [+0.00, +0.00, +0.00, +0.00, +2.89, +0.00, +0.00],
-                [+3.14, +2.73, +3.14, +1.54, +3.14, +0.00, +3.14],
-                [+0.00, +0.00, +0.00, +0.00, +0.00, +0.90, +2.89]]  # j7
+                [self.jLimits[0][1], +0.00,              +0.00,              +0.00,              +0.00,              +0.00,              +0.00],  # j1
+                [+0.00,              self.jLimits[1][1], +0.00,              +1.54,              +0.00,              +1.54,              +0.00],
+                [+0.00,              +1.54,              self.jLimits[2][1], +1.54,              +0.00,              +1.54,              +0.00],
+                [self.jLimits[3][1], -2.73,              self.jLimits[3][1], self.jLimits[3][1], self.jLimits[3][1], self.jLimits[3][1], self.jLimits[3][1]],
+                [+0.00,              +0.00,              +0.00,              +0.00,              self.jLimits[4][1], +0.00,              +0.00],
+                [+3.14,              +2.73,              +3.14,              +1.54,              +3.14,              +0.00,              +3.14],
+                [+0.00,              +0.00,              +0.00,              +0.00,              +0.00,              +0.90,              self.jLimits[6][1]]]  # j7
 
-        self.jointKP = [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 0.00]
+        self.jointKP = [30.0, 30.0, 30.0, 30.0, 30.0, 20.0, 20.0, 0.00]
         self.jointKV = [30.0, 30.0, 20.0, 20.0, 20.0, 10.0, 10.0, 0.00]
 
         self.startROS()
@@ -110,7 +110,7 @@ class frictionMeasurement(object):
     def decelDistanceReached(self):
         """Check if limits are reached."""
         decelDistance = 0.5*self.desired_dot_q*self.desired_acc_time
-        if self.pandaRobotState.q[self.desired_joint] < (self.jLimits[self.desired_joint][0] + decelDistance):
+        if (self.pandaRobotState.q[self.desired_joint] < (self.jLimits[self.desired_joint][0] + decelDistance)):
             return True
         else:
             return False
@@ -140,7 +140,7 @@ class frictionMeasurement(object):
         time.sleep(1)
 
         if not self.robotStatesAvailable:
-            print("error: no robot states available, quiting...")
+            print("error: no robot states available, quitting...")
             quit()
 
         rate = rospy.Rate(25)  # 25 Hz
@@ -187,7 +187,7 @@ class frictionMeasurement(object):
                     _updateTraj = False
 
                 if self.decelDistanceReached():
-                    rospy.loginfo("decel: %s" % (self.interpDecelTrajPhase[localIndex]))
+                    rospy.loginfo("reached")
                     self.controllerGoal.velocity[self.desired_joint] = self.interpDecelTrajPhase[localIndex]
                     localIndex += 1
                     if localIndex >= len(self.interpDecelTrajPhase):
@@ -202,12 +202,12 @@ class frictionMeasurement(object):
                 _printOnce = False
 
             # desired state publisher
-            self.controllerGoal.stamp = rospy.Time.now()
-            self.goal_pub.publish(self.controllerGoal)
+            # self.controllerGoal.stamp = rospy.Time.now()
+            # self.goal_pub.publish(self.controllerGoal)
             rate.sleep()
 
 
 if __name__ == '__main__':
     joint = 1  # j1 - j7
-    q_dot_desired = 1  # rad/s
+    q_dot_desired = -1*0.8  # rad/s
     frictionObj = frictionMeasurement(joint, q_dot_desired)
