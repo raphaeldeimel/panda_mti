@@ -239,6 +239,6 @@ class frictionMeasurement(object):
 
 
 if __name__ == '__main__':
-    joint = 2  # j1 - j7
-    q_dot_desired = 3.0  # rad/s
+    joint = 6  # j1 - j7
+    q_dot_desired = 0.1  # rad/s
     frictionObj = frictionMeasurement(joint, q_dot_desired)
