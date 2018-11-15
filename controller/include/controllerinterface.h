@@ -25,7 +25,7 @@ const int dofs = 7;
 const int dofs_ros = 8;
 
 
-typedef Eigen::Array<double,dofs,1> DOFVector; 
+typedef Eigen::Array<double,dofs,1> DOFVector;
 typedef Eigen::Map<Eigen::Array<double, dofs, 1> > DOFVectorMapped;
 
 typedef Eigen::Matrix<double, 6,1> Wrench;
@@ -39,7 +39,7 @@ typedef Eigen::Map<Eigen::Matrix<double, 7,7> > MassMatrixMapped;
 /*
 Abstract controller interface that is used in the mainloop:
 */
-class ControllerInterface 
+class ControllerInterface
 {
 
   public:
@@ -49,7 +49,7 @@ class ControllerInterface
 
     //called once right beefore control loop starts
     virtual void onStart() = 0;
-    
+
     //torque control loop callback
     virtual franka::Torques update(const franka::RobotState& robot_state, const franka::Duration period) = 0;
 
@@ -70,11 +70,11 @@ template < class ControllerInterfaceImpl > int mainloop()  {
   ros::NodeHandle rosnode;
   //get your params from ros config/launchfiles
   std::string hostname;
-  rosnode.param<std::string>("/panda/hostname",hostname, "panda1" );
+  rosnode.param<std::string>("/panda/hostname",hostname, "panda" );
   try {
     // connect to robot
     franka::Robot robot(hostname);
-    
+
     //instantiate controller object, also handles ros publish/subscribe
     auto cntrl = ControllerInterfaceImpl(robot, hostname, rosnode);
     retval = mainloopImpl(robot, &cntrl);
@@ -82,6 +82,6 @@ template < class ControllerInterfaceImpl > int mainloop()  {
         // print exception
         std::cout << "Exception: " << ex.what() << std::endl;
   }
-  
+
  return retval;
 }

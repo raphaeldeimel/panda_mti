@@ -5,9 +5,6 @@
   <arg name="load_gripper" default="false" />
   <arg name="robot_ip" default="robot.franka.de" />
   <arg name="publish_rate" default="30" />
-  
-  <param if="$(arg for_real)" name="panda_hostname" value="panda1"/>
+
+  <param if="$(arg for_real)" name="/panda/hostname" value="panda"/>
 </launch>
-
-
-
