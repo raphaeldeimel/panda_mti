@@ -40,11 +40,11 @@ void PDController::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGo
     //set future desired values
     rosTaud_next = rosTaud_next.min(maxkp_).max(minkp_);
     rosKp_next   = rosKp_next.min(maxkp_).max(minkp_);
-    rosKv_next   = rosKv_next.min(maxkv_).max(minkv_); 
+    rosKv_next   = rosKv_next.min(maxkv_).max(minkv_);
     rosQd_next   = rosQd_next.min(maxjointposition_).max(minjointposition_);
     rosDQd_next  = rosDQd_next.min(maxjointvelocity_).max(-maxjointvelocity_);
     rosTaud_next = rosTaud_next.min(maxdesiredjointtorque_).max(-maxdesiredjointtorque_);
-    
+
 
     //dofs+1 == gripper dof
     rosGripperTaud = msg->torque[dofs];
@@ -52,7 +52,7 @@ void PDController::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGo
     rosGripperDQd = msg->velocity[dofs];
     rosGripperKp = msg->kp[dofs];
     rosGripperKv = msg->kv[dofs];
-  
+
     timeUntilNextUpdate = rosExpectedUpdatePeriod; //reset interpolation interval
     watchdog_timeout = franka_time +  watchdogPeriod; //reset watchdog
 }
@@ -76,25 +76,30 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("/panda/currentstate", 10);
 
     pdcontroller_goal_listener_ = rosnode.subscribe("/panda/pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
-    
+
+    //friction compensation
+    rosnode.getParam("panda/stiction_offset", rosStictionOffset);
+    rosnode.getParam("panda/stiction_feedforward", rosStictionFeedforward);
+    // eigen missing
+
     gravity_vector << 0.,0.,-9.81,0.,0.,0.;
 
     franka_time = franka::Duration(0);
     watchdog_timeout = franka_time;
-    
+
     // Bias torque sensor
     gravity_array = pModel->gravity(initial_state);
 
     desired_force_torque.setZero();
-    
+
     payload_mass = 0.0;
 
     watchdogkv_ << 9,9,9,9,1,1,1;
-    
+
     //additional virtual damping:
     //kd_ << 5,5,5,5,2,2,2,2;
 
-    
+
     //values from franka's documentation:
     maxjointposition_           <<    2.8973,  1.7628,  2.8973, -0.0698,  2.8973,  3.7525,  2.8973;
     minjointposition_           <<   -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973; //soft joint limits
@@ -105,7 +110,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     //additional limits:
     maxkp_                      <<  100.,    100.,    100.,    100.,     50.,     50.,     50.;
     maxkv_                      <<  100.,    100.,    100.,    100.,     30.,     30.,     30.;
-    maxdesiredjointtorque_      <<    6.,      6.,      6.,      6.,      2.,      2.,      2.; 
+    maxdesiredjointtorque_      <<    6.,      6.,      6.,      6.,      2.,      2.,      2.;
     minkp_ << 0,0,0,0,0,0,0;
     minkv_ << 0,0,0,0,0,0,0;
 
@@ -121,7 +126,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
 }
 
-PDController::~PDController() 
+PDController::~PDController()
 {
  delete pModel;
 }
@@ -130,22 +135,22 @@ PDController::~PDController()
 void PDController::onStart() {
         const std::array< double, 7 > maxcollisiontorque_ = {87,87,87,87,12,12,12}; //contact torque limits
         const std::array< double, 6 > maxcollisionwrench_ = {70,70,70,30,30,30};   //contact wrench limits
-        
+
         const std::array< double, 7 > contactthresholdtorque_ = {87,87,87,87,12,12,12}; //contact detection threshold, torque
         const std::array< double, 6 > contactthresholdwrench_ = {70,70,70,30,30,30};  //contact detection threshold, wrench
-    
+
         pRobot->setCollisionBehavior(
-        contactthresholdtorque_, 
-        maxcollisiontorque_, 
-        contactthresholdwrench_, 
-        maxcollisionwrench_ ); 
+        contactthresholdtorque_,
+        maxcollisiontorque_,
+        contactthresholdwrench_,
+        maxcollisionwrench_ );
 }
 
 void PDController::service(const franka::RobotState& robot_state, const franka::Duration period) {
     //gets called always, even if controller is not active
     robot_state_ = robot_state;
 
-    
+
     //compute things from robot state:
     jacobian_array_ = pModel->zeroJacobian(franka::Frame::kEndEffector, robot_state);
     mass_matrix_array_ = pModel->mass(robot_state);
@@ -167,12 +172,12 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         statemsg.tau[dofs] = 0.0;
         statemsg.qd[dofs]  = 0.0;
         statemsg.dqd[dofs] = 0.0;
-        
-        
+
+
         common_state_publisher.publish(statemsg);
     }
     //give the ros listener time to update its values:
-    ros::spinOnce(); 
+    ros::spinOnce();
 
     static int k = 0;
     if (robot_state.control_command_success_rate > 0.05 && robot_state.control_command_success_rate < 0.90) {
@@ -195,7 +200,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
      dqd_last_ = dqd_;
 
     service(robot_state, period); //get current values, communicate with ros
-    
+
 
 
     //interpolate between previous and next desired ros values:
@@ -207,7 +212,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
     dqd_  =  dqd_ + i* ( rosDQd_next -  dqd_);
     taud_ = taud_ + i* (rosTaud_next - taud_);
     timeUntilNextUpdate = std::max(int64_t(0), timeUntilNextUpdate - dt_msec); //adjust the remaining interpolation time
-    
+
     /*if no recent goal was posted, do some damage control*/
     if(watchdog_timeout < franka_time){ // ToDo goal_time + 500ms too long?
         if(watchDogTriggered == false) ROS_ERROR("pdcontrollernode: Nobody is sending me updates!! Stopping for safety.");
@@ -223,7 +228,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
 
     /*=============================== sanitizes commanded positions and velocities ==========================*/
     //limit_desired_motion();
-    
+
     /*=============================== get current state =================================================*/
 
     //wrap raw arrays into Eigen objects:
@@ -241,15 +246,15 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
     //The control law:
     DOFVector tau_error =  kp_ * (qd_ - q_) +  kv_ * (dqd_ - dq_) - kd_ * dq_;
 
-    tau_cmd_unlimited_unfiltered_ << 
+    tau_cmd_unlimited_unfiltered_ <<
             tau_coriolis      //gravity torque is addedd by panda firmware
-            - damping * dq_   //add damping 
+            - damping * dq_   //add damping
             + tau_error       //add pd-controller torques
             + taud_           //add desired torque
             + taud_ee         //add desired ee wrench force
     ;
     tau_cmd_unlimited_ << 0.75*tau_cmd_unlimited_ + 0.25*tau_cmd_unlimited_unfiltered_; //low pass torques to avoid ringing
-    
+
     /*=============================== sanitizes torque and torque rate ==========================*/
     tau_cmd_limited_ << tau_cmd_unlimited_.min(maxjointtorque_).max(-maxjointtorque_);
     // limit torque rate:
@@ -259,7 +264,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
 
 
 
-    return franka::Torques(sent_torques_array_);  //return the buffer underlying tau_cmd 
+    return franka::Torques(sent_torques_array_);  //return the buffer underlying tau_cmd
 }
 
 bool PDController::limit_desired_motion()
@@ -299,7 +304,7 @@ bool PDController::limit_desired_motion()
     posdirection = delta_qd.sign().max(0.0);
     deltamax_q = deltamax_dq1 * posdirection + deltamax_dq2 * (1.0 - posdirection);
     budgets_position = deltamax_q / delta_qd.abs().max(0.000001);
-    
+
 
     double budget_pos = budgets_position.minCoeff();
     double budget_vel = budgets_velocity.minCoeff();
@@ -309,11 +314,7 @@ bool PDController::limit_desired_motion()
     double budget = std::min(budget_pos, budget_vel);
     qd_ = qd_last_  + delta_qd * budget;
     dqd_ = dqd_last_  + delta_dqd * budget;
-    
+
     return true;
 
 }
-
-
- 
-

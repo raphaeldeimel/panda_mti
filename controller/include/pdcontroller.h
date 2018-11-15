@@ -4,7 +4,7 @@
 #include <controllerinterface.h>
 #include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
 
-class PDController : public ControllerInterface 
+class PDController : public ControllerInterface
 {
 
 public:
@@ -12,7 +12,7 @@ public:
     ~PDController() override;
 
     bool isTorqueController() const  override {return true;};
-    
+
     void onStart();
 
     //Control loop callback
@@ -22,7 +22,7 @@ public:
     void service(const franka::RobotState& robot_state, const franka::Duration period) override;
 
     double gripper_q;
-    
+
 protected:
 
 
@@ -39,9 +39,15 @@ protected:
 
     const std::array<double, dofs> kMaxTorqueRate{{1000, 1000, 1000, 1000, 1000, 1000, 1000}};
     Eigen::Matrix<double, 6,1> gravity_vector;
-    
+
     double desired_payload_mass{0.0};
-    const double payload_filter_gain{0.001}; 
+    const double payload_filter_gain{0.001};
+
+    //Params from ROS:
+    std::vector<float> rosStictionOffset;
+    std::vector<float> rosStictionFeedforward;
+    Eigen::Matrix<float, 7,1> stiction_offset;
+    Eigen::Matrix<float, 7,1> stiction_feedforward;
 
     //Values from ROS:
     DOFVector rosTaud_next;
@@ -49,6 +55,7 @@ protected:
     DOFVector rosDQd_next;
     DOFVector rosKp_next;
     DOFVector rosKv_next;
+
     const int64_t rosExpectedUpdatePeriod = 25; //steps in the interpolation interval 0...1, i.e  = hz(control loop) / hz(minimum ros update rate) = 1000/40
     int64_t timeUntilNextUpdate  = 25;  //interpolation variable
 
@@ -59,7 +66,7 @@ protected:
     double rosGripperKv;
     double payload_mass;
 
-    static constexpr double kDeltaTauMax = 0.5; //Panda firmware complains if we use 1.0 Nm/ms from the example, use 0.5 instead		
+    static constexpr double kDeltaTauMax = 0.5; //Panda firmware complains if we use 1.0 Nm/ms from the example, use 0.5 instead
     double damping = 0.; // TODO: set velocity-damping for additional safety
 
     const int publisher_culling_amount  = 10;  //the factor to reduce ros publishing to avoid taxing the realtime-ness
@@ -140,8 +147,3 @@ protected:
     franka::Duration franka_time;
 
 };
-
-
-
-
-
