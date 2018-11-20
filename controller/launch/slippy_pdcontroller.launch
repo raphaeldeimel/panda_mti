@@ -4,9 +4,14 @@
   <arg name="for_real" default="true"/>
   <arg name="load_gripper" default="false" />
   <arg name="robot_ip" default="robot.franka.de" />
+  <arg name="robot_name" default="panda" />
   <arg name="publish_rate" default="30" />
+  <arg name="robot_mac" default="901b0ed7ad5f" />
 
-  <param if="$(arg for_real)" name="/panda/hostname" value="panda"/>
+  <param name="/panda/hostname" value="panda"/>
+  <param name="/panda/mac_address" command="$(find controller_panda_mti)/scripts/getHardwareID.sh $(arg robot_name)" />
 
-  <node pkg="controller_panda_mti" name="hardware_param" type="hardware_param.py" output="screen"/>
+  <rosparam command="load" file="$(find controller_panda_mti)/config/$(arg robot_mac).yaml" />
+
+  <node if="$(arg for_real)" name="pdcontroller" pkg="mti_panda_pdcontroller" launch-prefix="chrt -f 40" type="pdcontroller" required="true" output="screen"/>
 </launch>

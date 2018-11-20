@@ -23,9 +23,8 @@ def robotParameterization():
     # get robot hostname or ip address
     hwName = rospy.get_param("/panda/hostname")
     # check if net-tools is installed
-    basepath = os.path.join(rospack.get_path('controller_panda_mti'), 'scripts', 'getHardwareID.sh')
-    hwID = subprocess.check_output(shlex.split('./getHardwareID.sh ' + hwName))
-    #hwID = subprocess.check_output(shlex.split('. /home/alexander/git/ws_panda/src/panda_mti/controller/scripts/getHardwareID.sh ' + hwName))
+    basepath = os.path.join(rospack.get_path('controller_panda_mti'))
+    hwID = subprocess.check_output(shlex.split('sh ' + basepath + '/scripts/getHardwareID.sh ' + hwName))
     if hwID.rstrip() == "dpkg-error":
         print("Error while executing net-tools! \n")
         print("Please make sure that net-tools is installed. \n")
@@ -35,7 +34,7 @@ def robotParameterization():
         print("No robot found! quitting...")
         sys.exit()
 
-    with open("../config/hardwareParam.yaml", 'r') as hwSetup:
+    with open(basepath + "/config/hardwareParam.yaml", 'r') as hwSetup:
         try:
             hwConfig = yaml.load(hwSetup)
         except yaml.YAMLError as err:

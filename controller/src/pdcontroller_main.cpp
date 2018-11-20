@@ -15,5 +15,3 @@ int main(int argc, char** argv) {
   int exitval = mainloop<PDController >(); //run the control main loop using PDController
   return exitval;
 }
-
-
