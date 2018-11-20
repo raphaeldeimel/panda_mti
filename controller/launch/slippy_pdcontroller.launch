@@ -7,4 +7,6 @@
   <arg name="publish_rate" default="30" />
 
   <param if="$(arg for_real)" name="/panda/hostname" value="panda"/>
+
+  <node pkg="controller_panda_mti" name="hardware_param" type="hardware_param.py" output="screen"/>
 </launch>

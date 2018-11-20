@@ -10,17 +10,22 @@ import subprocess
 import shlex
 import yaml
 import sys
+import os
 
 import rospy
+import rospkg
 
 
 def robotParameterization():
     """Robot parameterization."""
+
+    rospack = rospkg.RosPack()
     # get robot hostname or ip address
     hwName = rospy.get_param("/panda/hostname")
     # check if net-tools is installed
+    basepath = os.path.join(rospack.get_path('controller_panda_mti'), 'scripts', 'getHardwareID.sh')
     hwID = subprocess.check_output(shlex.split('./getHardwareID.sh ' + hwName))
-
+    #hwID = subprocess.check_output(shlex.split('. /home/alexander/git/ws_panda/src/panda_mti/controller/scripts/getHardwareID.sh ' + hwName))
     if hwID.rstrip() == "dpkg-error":
         print("Error while executing net-tools! \n")
         print("Please make sure that net-tools is installed. \n")
