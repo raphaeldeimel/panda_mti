@@ -13,5 +13,5 @@
 
   <rosparam command="load" file="$(find controller_panda_mti)/config/$(arg robot_mac).yaml" />
 
-  <node if="$(arg for_real)" name="pdcontroller" pkg="mti_panda_pdcontroller" launch-prefix="chrt -f 40" type="pdcontroller" required="true" output="screen"/>
+  <node if="$(arg for_real)" name="pdcontroller" pkg="controller_panda_mti" launch-prefix="chrt -f 40" type="pdcontroller" required="true" output="screen"/>
 </launch>

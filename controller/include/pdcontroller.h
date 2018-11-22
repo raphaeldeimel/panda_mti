@@ -44,10 +44,8 @@ protected:
     const double payload_filter_gain{0.001};
 
     //Params from ROS:
-    std::vector<float> rosStictionOffset;
-    std::vector<float> rosStictionFeedforward;
-    Eigen::Matrix<float, 7,1> stiction_offset;
-    Eigen::Matrix<float, 7,1> stiction_feedforward;
+    DOFVector torque_bias;
+    DOFVector torque_stiction;
 
     //Values from ROS:
     DOFVector rosTaud_next;

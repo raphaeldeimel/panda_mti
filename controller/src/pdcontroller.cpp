@@ -77,10 +77,20 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
     pdcontroller_goal_listener_ = rosnode.subscribe("/panda/pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
 
-    //friction compensation
-    rosnode.getParam("panda/stiction_offset", rosStictionOffset);
-    rosnode.getParam("panda/stiction_feedforward", rosStictionFeedforward);
-    // eigen missing
+    std::vector <double> v;
+    rosnode.getParam("panda/torque_bias", v);
+    if (v.size() != dofs) {
+      ROS_WARNING("panda/torque_bias length is wrong, ignoring it.");
+    } else {
+      for (int i=0; i<dofs; i++) {torque_bias[i] = v[i];}
+    }
+
+    rosnode.getParam("panda/torque_stiction", v);
+    if (v.size() != dofs) {
+      ROS_WARNING("panda/torque_stiction length is wrong, ignoring it.");
+    } else {
+      for (int i=0; i<dofs; i++) {torque_stiction[i] = v[i];}
+    }
 
     gravity_vector << 0.,0.,-9.81,0.,0.,0.;
 
@@ -94,8 +104,8 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
     payload_mass = 0.0;
 
-    watchdogkv_ << 9,9,9,9,1,1,1;
-
+    //watchdogkv_ << 9,9,9,9,1,1,1;
+    watchdogkv_ << 0,0,0,0,0,0,0;
     //additional virtual damping:
     //kd_ << 5,5,5,5,2,2,2,2;
 
@@ -246,12 +256,16 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
     //The control law:
     DOFVector tau_error =  kp_ * (qd_ - q_) +  kv_ * (dqd_ - dq_) - kd_ * dq_;
 
+
+
     tau_cmd_unlimited_unfiltered_ <<
             tau_coriolis      //gravity torque is addedd by panda firmware
             - damping * dq_   //add damping
             + tau_error       //add pd-controller torques
             + taud_           //add desired torque
             + taud_ee         //add desired ee wrench force
+            + torque_bias     //add friction compensation
+            + torque_stiction  * (dq_.sign() + dqd_.sign())
     ;
     tau_cmd_unlimited_ << 0.75*tau_cmd_unlimited_ + 0.25*tau_cmd_unlimited_unfiltered_; //low pass torques to avoid ringing
 
