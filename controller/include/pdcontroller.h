@@ -44,8 +44,8 @@ protected:
     const double payload_filter_gain{0.001};
 
     //Params from ROS:
-    DOFVector torque_bias;
-    DOFVector torque_stiction;
+    DOFVector tau_bias;
+    DOFVector tau_stiction;
 
     //Values from ROS:
     DOFVector rosTaud_next;
@@ -94,6 +94,13 @@ protected:
     DOFVector maxjointtorque_;
     DOFVector maxdesiredjointtorque_;
     DOFVector maxjointtorquechange_;
+
+	//soft borders
+    DOFVector min_border_;
+	DOFVector max_border_;
+	DOFVector zero_line_;
+	double border_zone_;
+	double torque_border_;
 
 
     DOFVector maxkp_;

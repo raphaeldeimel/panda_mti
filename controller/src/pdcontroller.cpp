@@ -80,16 +80,16 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     std::vector <double> v;
     rosnode.getParam("panda/torque_bias", v);
     if (v.size() != dofs) {
-      ROS_WARNING("panda/torque_bias length is wrong, ignoring it.");
+      ROS_WARN("panda/torque_bias length is wrong, ignoring it.");
     } else {
-      for (int i=0; i<dofs; i++) {torque_bias[i] = v[i];}
+      for (int i=0; i<dofs; i++) {tau_bias[i] = v[i];}
     }
 
     rosnode.getParam("panda/torque_stiction", v);
     if (v.size() != dofs) {
-      ROS_WARNING("panda/torque_stiction length is wrong, ignoring it.");
+      ROS_WARN("panda/torque_stiction length is wrong, ignoring it.");
     } else {
-      for (int i=0; i<dofs; i++) {torque_stiction[i] = v[i];}
+      for (int i=0; i<dofs; i++) {tau_stiction[i] = v[i];}
     }
 
     gravity_vector << 0.,0.,-9.81,0.,0.,0.;
@@ -124,6 +124,12 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     minkp_ << 0,0,0,0,0,0,0;
     minkv_ << 0,0,0,0,0,0,0;
 
+    //soft borders
+    zero_line_ << 0,0,0,0,0,0,0;
+    border_zone_ = 0.85;
+    torque_border_ = 5;
+    max_border_ = maxjointposition_*border_zone_;
+    min_border_ = minjointposition_*border_zone_;
 
 
     ROS_INFO_STREAM("initial robot joint state: {" << initial_state.q[0] << ", " <<
@@ -256,7 +262,9 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
     //The control law:
     DOFVector tau_error =  kp_ * (qd_ - q_) +  kv_ * (dqd_ - dq_) - kd_ * dq_;
 
-
+    DOFVector tau_border = torque_border_*(
+                -1*q_.sign()*(zero_line_.max((q_ - max_border_)))
+                - (-1*q_).sign()*(zero_line_.min((q_ - min_border_))));
 
     tau_cmd_unlimited_unfiltered_ <<
             tau_coriolis      //gravity torque is addedd by panda firmware
@@ -264,8 +272,9 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
             + tau_error       //add pd-controller torques
             + taud_           //add desired torque
             + taud_ee         //add desired ee wrench force
-            + torque_bias     //add friction compensation
-            + torque_stiction  * (dq_.sign() + dqd_.sign())
+            + tau_bias     //add friction compensation
+            + tau_stiction  * (dq_.sign() + dqd_.sign())
+            + tau_border
     ;
     tau_cmd_unlimited_ << 0.75*tau_cmd_unlimited_ + 0.25*tau_cmd_unlimited_unfiltered_; //low pass torques to avoid ringing
 
