@@ -10,7 +10,6 @@
 
   <param name="/panda/hostname" value="panda"/>
   <param name="/panda/mac_address" command="$(find controller_panda_mti)/scripts/getHardwareID.sh $(arg robot_name)" />
-
   <rosparam command="load" file="$(find controller_panda_mti)/config/$(arg robot_mac).yaml" />
 
   <node if="$(arg for_real)" name="pdcontroller" pkg="controller_panda_mti" launch-prefix="chrt -f 40" type="pdcontroller" required="true" output="screen"/>
