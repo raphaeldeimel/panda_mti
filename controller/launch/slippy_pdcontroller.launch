@@ -2,15 +2,14 @@
 
 <launch>
   <arg name="for_real" default="true"/>
-  <arg name="load_gripper" default="false" />
+  <arg name="load_gripper" default="true" />
   <arg name="robot_ip" default="robot.franka.de" />
   <arg name="robot_name" default="panda" />
   <arg name="publish_rate" default="30" />
-  <arg name="robot_mac" default="901b0ed7ad5f" />
 
   <param name="/panda/hostname" value="panda"/>
-  <param name="/panda/mac_address" command="$(find controller_panda_mti)/scripts/getHardwareID.sh $(arg robot_name)" />
-  <rosparam command="load" file="$(find controller_panda_mti)/config/$(arg robot_mac).yaml" />
+
+  <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC_ROS).yaml" />
 
   <node if="$(arg for_real)" name="pdcontroller" pkg="controller_panda_mti" launch-prefix="chrt -f 40" type="pdcontroller" required="true" output="screen"/>
 </launch>

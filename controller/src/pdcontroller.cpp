@@ -274,7 +274,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
             + taud_ee         //add desired ee wrench force
             + tau_bias     //add friction compensation
             + tau_stiction  * (dq_.sign() + dqd_.sign())
-            + tau_border
+            + tau_border      //add spring effect in border region
     ;
     tau_cmd_unlimited_ << 0.75*tau_cmd_unlimited_ + 0.25*tau_cmd_unlimited_unfiltered_; //low pass torques to avoid ringing
 
