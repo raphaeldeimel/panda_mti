@@ -127,7 +127,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     //soft borders
     zero_line_ << 0,0,0,0,0,0,0;
     border_zone_ = 0.85;
-    torque_border_ = 5;
+    torque_border_ = 10;
     max_border_ = maxjointposition_*border_zone_;
     min_border_ = minjointposition_*border_zone_;
 
