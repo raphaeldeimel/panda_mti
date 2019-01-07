@@ -14,13 +14,14 @@ float getGripperPosition();
 
 void setGripperDesired(float q, float tau);
 
-const float threshold_close = 0.03;
-const float threshold_open  = 0.05;
-const float q_max = 0.12;
+const float threshold_close = 0.02;
+const float threshold_open  = 0.06;
+
+const float q_max = 0.08;
 const float q_min = 0.00;
 
-const float dq_max = 0.05;
-const float dq_min = -0.05;
+const float dq_max = 0.15;
+const float dq_min = -0.15;
 
 
 }
