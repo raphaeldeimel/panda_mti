@@ -3,7 +3,7 @@
   <node pkg="tf" type="static_transform_publisher" name="map2lab_frame" args="0.0 0.0 0.0 0.0 0.0 0.0 1.0 map lab_frame 1000" />
   <node pkg="tf" type="static_transform_publisher" name="lab_frame2schunk_base_link" args="2.0 0.0 1.0 1.57079632 0.0 3.141592 lab_frame schunk_base_link 1000" />
 
-  <param name="schunk_ft_hostaddress" value="192.168.1.1"/>
+  <param name="schunk_ft_hostaddress" value="192.168.11.3"/>
   <param name="schunk_ft_pub_rate" value="50"/>
   <node name="netft_node" pkg="netft_utils" type="netft_node" respawn="false" output="screen"/>
   <node name="netft_utils" pkg="netft_utils" type="netft_utils" args="lab_frame schunk_base_link"/>
