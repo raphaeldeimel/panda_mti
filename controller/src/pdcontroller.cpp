@@ -4,11 +4,7 @@
 #include <iostream>
 #include <iterator>
 
-
-
 #include <pdcontroller.h>
-#include "netft.h"
-
 
 
 std::array<double, 7> limitRate(const std::array<double, 7>& max_derivatives,
