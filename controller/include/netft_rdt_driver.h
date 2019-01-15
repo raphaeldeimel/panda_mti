@@ -40,7 +40,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <string>
-
+#include <csignal>
 namespace netft_rdt_driver
 {
 
@@ -55,6 +55,10 @@ public:
   //! Get newest RDT data from netFT device
   void getData(double data[6]);
 
+  void startStreaming(void);
+
+  void stopStreaming(void);
+
   //! Wait for new NetFT data to arrive.  
   // Returns true if new data has arrived, false it function times out
   bool waitForNewData(void);
@@ -63,7 +67,6 @@ protected:
   void recvThreadFunc(void);
 
   //! Asks NetFT to start streaming data.
-  void startStreaming(void);
 
   enum {RDT_PORT=49152};
   std::string address_;

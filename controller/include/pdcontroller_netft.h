@@ -1,18 +1,20 @@
-// Copyright (c) 2018 Raphael Deimel
 #pragma once
 
-#include <controllerinterface.h>
 #include <pdcontroller.h>
-
-#include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
+#include <netft_rdt_driver.h>
 
 class PDControllerNetft : public PDController
 {
   public:
     PDControllerNetft(franka::Robot& robot, std::string& hostname, ros::NodeHandle& rosnode);
     ~PDControllerNetft();
-    double rdt_data[6];
+
     void service(const franka::RobotState& robot_state, const franka::Duration period);
+    void stopNetft();
+
+  protected:
+    double rdt_data[6]; //raw wrench
+    netft_rdt_driver::NetFTRDTDriver* ptrNetft;
 };
 
 

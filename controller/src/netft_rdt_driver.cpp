@@ -32,9 +32,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include "netft_rdt_driver.h"
+#include "../include/netft_rdt_driver.h"
 #include <stdint.h>
 #include <exception>
+#include <iostream>
 
 using boost::asio::ip::udp;
 
@@ -124,7 +125,6 @@ void RDTCommand::pack(uint8_t *buffer) const
   buffer[7] = (sample_count_ >> 0) & 0xFF;
 }
 
-
 NetFTRDTDriver::NetFTRDTDriver(const std::string &address) :
   address_(address),
   socket_(io_service_),
@@ -142,7 +142,6 @@ NetFTRDTDriver::NetFTRDTDriver(const std::string &address) :
   udp::endpoint netft_endpoint( boost::asio::ip::address_v4::from_string(address), RDT_PORT);
   socket_.open(udp::v4());
   socket_.connect(netft_endpoint);
-  
   // TODO : Get/Set Force/Torque scale for device
   // Force/Sclae is based on counts per force/torque value from device
   // these value are manually read from device webserver, but in future they 
@@ -169,13 +168,11 @@ NetFTRDTDriver::NetFTRDTDriver(const std::string &address) :
       throw std::runtime_error("No data received from NetFT device");
     }
   }
-
 }
 
 
 NetFTRDTDriver::~NetFTRDTDriver()
 {
-  // TODO stop transmission, 
   // stop thread
   stop_recv_thread_ = true;
   if (!recv_thread_.timed_join(boost::posix_time::time_duration(0,0,1,0)))
@@ -218,6 +215,15 @@ void NetFTRDTDriver::startStreaming(void)
   socket_.send(boost::asio::buffer(buffer, RDTCommand::RDT_COMMAND_SIZE)); 
 }
 
+void NetFTRDTDriver::stopStreaming(void)
+{
+  RDTCommand stop_transmission;
+  stop_transmission.command_ = RDTCommand::CMD_STOP_STREAMING;
+  stop_transmission.sample_count_ = RDTCommand::INFINITE_SAMPLES;
+  uint8_t buffer[RDTCommand::RDT_COMMAND_SIZE];
+  stop_transmission.pack(buffer);
+  socket_.send(boost::asio::buffer(buffer, RDTCommand::RDT_COMMAND_SIZE));
+}
 
 
 void NetFTRDTDriver::recvThreadFunc()

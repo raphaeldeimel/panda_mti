@@ -61,7 +61,6 @@ add_executable(pdcontroller_gripper
   src/pdcontroller.cpp
   src/gripperbackground.cpp
   src/pdcontroller_gripper.cpp
-  
 )
 add_dependencies(pdcontroller_gripper 
     panda_msgs_mti_generate_messages_cpp
@@ -80,7 +79,24 @@ target_include_directories(pdcontroller_gripper PUBLIC
   include
 )
 
-
+# netft
+add_executable(pdcontroller_netft 
+  src/common.cpp
+  src/pdcontroller.cpp
+  src/netft_rdt_driver.cpp
+  src/pdcontroller_netft.cpp
+)
+target_link_libraries(pdcontroller_netft PUBLIC
+  Franka::Franka
+  ${catkin_LIBRARIES}
+)
+target_include_directories(pdcontroller_netft SYSTEM PUBLIC
+  ${Franka_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+target_include_directories(pdcontroller_netft PUBLIC
+  include
+)
 
 #Teaching controller 
 add_executable(statepublisher 
