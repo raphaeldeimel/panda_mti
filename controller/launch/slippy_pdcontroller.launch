@@ -9,14 +9,8 @@
   <arg name="publish_rate" default="30" />
 
   <param name="/panda/hostname" value="panda"/>
-  <param name="schunk_ft_hostaddress" value="192.168.11.3"/>
-  <param name="schunk_ft_pub_rate" value="50"/>
 
-  <!--
-  <node if="$(load_ft_sensor)" name="netft_node" pkg="netft_utils" type="netft_node" respawn="false" output="screen"/>
-  <node if="$(load_ft_sensor)" name="netft_utils" pkg="netft_utils" type="netft_utils" args="lab_frame schunk_base_link"/>
-  -->
-  <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC_ROS).yaml" />
+  <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />
 
   <node if="$(arg for_real)" name="pdcontroller" pkg="controller_panda_mti" launch-prefix="chrt -f 40" type="pdcontroller" required="true" output="screen"/>
 </launch>

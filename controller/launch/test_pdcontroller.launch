@@ -9,9 +9,8 @@
   <arg name="robot_ip" default="robot.franka.de" />
   <arg name="publish_rate" default="30" />
   
-  <param if="$(arg for_real)" name="/panda/hostname" value="panda"/>
   <param if="$(arg load_netft)" name="/netft/hostaddress" value="192.168.11.3"/>
-  
+  <param if="$(arg for_real)" name="/panda/hostname" value="panda"/>
   
   <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find franka_description)/robots/panda_arm.urdf.xacro"/>
   <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
