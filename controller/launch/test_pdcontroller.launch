@@ -7,7 +7,8 @@
   <arg name="publish_rate" default="30" />
   
   <param if="$(arg for_real)" name="panda_hostname" value="panda1"/>
-  
+
+  <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />  
   
   <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find franka_description)/robots/panda_arm.urdf.xacro"/>
   <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
