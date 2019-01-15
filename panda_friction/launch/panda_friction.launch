@@ -1,4 +1,4 @@
 <?xml version="1.0" ?>
 <launch>
-  <node name="panda_friction" pkg="panda_friction" type="panda_friction.py"/>
+  <node name="friction_measurement" pkg="panda_friction" type="panda_friction.py" output="screen"/>
 </launch>

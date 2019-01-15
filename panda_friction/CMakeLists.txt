@@ -12,3 +12,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+
+# catkin_install_python(
+#  PROGRAMS src/panda_friction.py
+#  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
+
