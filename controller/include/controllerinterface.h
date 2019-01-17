@@ -57,7 +57,6 @@ class ControllerInterface
     virtual void service(const franka::RobotState& robot_state, const franka::Duration period) = 0;
 
     std::string hostname;
-    std::string netft_address;
 };
 
 
@@ -71,9 +70,8 @@ template < class ControllerInterfaceImpl > int mainloop()  {
   ros::NodeHandle rosnode;
   //get your params from ros config/launchfiles
   std::string hostname;
-  std::string netft_address;
   rosnode.param<std::string>("/panda/hostname",hostname, "panda" );
-  rosnode.param<std::string>("/netft/hostaddress", netft_address, "not_available");
+
   try {
     // connect to robot
     franka::Robot robot(hostname);

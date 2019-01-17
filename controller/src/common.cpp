@@ -25,7 +25,7 @@ ControllerInterface::~ControllerInterface() {} //c++ requires pure virtual desct
 volatile static bool exitrequested = false;
 void exithandler(int s){
            std::cout << "Ctrl-C pressed. Will exit when control stops." << std::endl;
-           exitrequested = true; 
+           exitrequested = true;
 }
 
 static ControllerInterface* currentController = NULL;

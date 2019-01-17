@@ -102,6 +102,8 @@ protected:
 	double border_zone_;
 	double torque_border_;
 
+  //netft data
+    double rdtdata_[6] = {};
 
     DOFVector maxkp_;
     DOFVector minkp_;
