@@ -15,13 +15,15 @@ int main(int argc, char** argv) {
 PDControllerNetft::PDControllerNetft(franka::Robot& robot, std::string& hostname, ros::NodeHandle& rosnode) :
     PDController(robot, hostname, rosnode)
 {
+    std::string netft_address; // error in header
+    rosnode.getParam("/netft/hostaddress", netft_address);
     try
     {
-        ptrNetft = new netft_rdt_driver::NetFTRDTDriver("192.168.11.3");
+        ptrNetft = new netft_rdt_driver::NetFTRDTDriver(netft_address);
     }
     catch(std::runtime_error)
     {
-        std::cout << "netft error";
+        std::cout << "netft error: connection to netft failed";
     }
 }
 
@@ -31,16 +33,11 @@ PDControllerNetft::~PDControllerNetft() {}
 
 void PDControllerNetft::service(const franka::RobotState& robot_state, const franka::Duration period)
 {
-
-
-    //ptrNetft->getData(&rdt_data[0]);
-
-
+    ptrNetft->getData(&PDController::rdtdata_[0]);
     PDController::service(robot_state, period);
 }
 
 void PDControllerNetft::stopNetft()
 {
-    //stop rdt stream
-    ptrNetft->stopStreaming();
+    ptrNetft->stopStreaming(); //stop rdt stream
 }

@@ -13,7 +13,6 @@ class PDControllerNetft : public PDController
     void stopNetft();
 
   protected:
-    double rdt_data[6]; //raw wrench
     netft_rdt_driver::NetFTRDTDriver* ptrNetft;
 };
 
