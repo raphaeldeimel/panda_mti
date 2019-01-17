@@ -179,6 +179,8 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         for (int i=0;i<dofs;i++) { statemsg.qd[i]  = dq_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dqd[i] = dqd_.coeff(i);}
 
+        for (int i=0;i<6;i++) {statemsg.ee_ft[i] = rdtdata_[i];}
+
         statemsg.q[dofs]   = gripper_q;
         statemsg.dq[dofs]  = 0.0;
         statemsg.tau[dofs] = 0.0;
