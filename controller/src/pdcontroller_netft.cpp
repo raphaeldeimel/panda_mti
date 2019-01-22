@@ -28,7 +28,11 @@ PDControllerNetft::PDControllerNetft(franka::Robot& robot, std::string& hostname
 }
 
 
-PDControllerNetft::~PDControllerNetft() {}
+PDControllerNetft::~PDControllerNetft()
+{
+    //stops rdt stream
+    this->stopNetft();
+}
 
 
 void PDControllerNetft::service(const franka::RobotState& robot_state, const franka::Duration period)
