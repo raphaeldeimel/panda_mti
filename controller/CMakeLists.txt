@@ -86,6 +86,11 @@ add_executable(pdcontroller_netft
   src/netft_rdt_driver.cpp
   src/pdcontroller_netft.cpp
 )
+
+add_dependencies(pdcontroller_netft 
+    panda_msgs_mti_generate_messages_cpp
+)
+
 target_link_libraries(pdcontroller_netft PUBLIC
   Franka::Franka
   ${catkin_LIBRARIES}
