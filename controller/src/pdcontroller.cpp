@@ -120,7 +120,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     minkp_ << 0,0,0,0,0,0,0;
     minkv_ << 0,0,0,0,0,0,0;
 
-    //soft borders
+    //elastic joint limits - counter torque
     zero_line_ << 0,0,0,0,0,0,0;
     border_zone_ = 0.85;
     torque_border_ = 10;
