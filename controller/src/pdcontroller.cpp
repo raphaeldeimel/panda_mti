@@ -75,6 +75,8 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
     common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("/panda/currentstate", 10);
 
+    ee_publisher = rosnode.advertise<panda_msgs_mti::RobotEEState>("/panda/currentEEstate", 10);
+
     pdcontroller_goal_listener_ = rosnode.subscribe("/panda/pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
 
     std::vector <double> v;
@@ -169,13 +171,15 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
 
     //compute things from robot state:
     jacobian_array_ = pModel->zeroJacobian(franka::Frame::kEndEffector, robot_state);
+    jacobian_array_ee_ = pModel->bodyJacobian(franka::Frame::kEndEffector, robot_state);
     mass_matrix_array_ = pModel->mass(robot_state);
     coriolis_vector_ = pModel->coriolis(robot_state);
 
     if (state_culling_count-- <= 0) {
         state_culling_count = publisher_culling_amount;
+        ros::Time now  = ros::Time::now();
         panda_msgs_mti::RobotState8 statemsg = panda_msgs_mti::RobotState8();
-        statemsg.stamp = ros::Time::now();
+        statemsg.stamp = now;
         statemsg.mode = (int)robot_state.robot_mode;
         for (int i=0;i<dofs;i++) { statemsg.q[i]   = q_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dq[i]  = dq_.coeff(i);}
@@ -189,8 +193,48 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         statemsg.qd[dofs]  = 0.0;
         statemsg.dqd[dofs] = 0.0;
 
-
         common_state_publisher.publish(statemsg);
+
+        //create and publish an end effector frame:
+        geometry_msgs::TransformStamped transformStamped;
+        transformStamped.header.stamp = now;
+        transformStamped.header.frame_id = "panda_link0";
+        transformStamped.child_frame_id = "panda_EE";
+        transformStamped.transform.translation.x = robot_state.O_T_EE[12];
+        transformStamped.transform.translation.y = robot_state.O_T_EE[13];
+        transformStamped.transform.translation.z = robot_state.O_T_EE[14];
+        tf2::Matrix3x3 ee_rotationmatrix = tf2::Matrix3x3(
+            robot_state.O_T_EE[0],robot_state.O_T_EE[4],robot_state.O_T_EE[8],
+            robot_state.O_T_EE[1],robot_state.O_T_EE[5],robot_state.O_T_EE[9],
+            robot_state.O_T_EE[2],robot_state.O_T_EE[6],robot_state.O_T_EE[10]
+        );
+        tf2::Quaternion ee_quaternion  = tf2::Quaternion();
+        ee_rotationmatrix.getRotation(ee_quaternion);
+        transformStamped.transform.rotation.x = ee_quaternion.x();
+        transformStamped.transform.rotation.y = ee_quaternion.y();
+        transformStamped.transform.rotation.z = ee_quaternion.z();
+        transformStamped.transform.rotation.w = ee_quaternion.w();
+     
+        tf_broadcaster.sendTransform(transformStamped);
+        
+        //publish end effector jacobian in base frame:
+        panda_msgs_mti::RobotEEState ee_state;
+        ee_state.stamp = now;
+        for (int i=0; i < 42; i++) {
+            ee_state.jacobian_base[i] = jacobian_array_[i];
+        }
+        for (int i=0; i < 42; i++) {
+            ee_state.jacobian_ee[i] = jacobian_array_ee_[i];
+        }
+        for (int i=0; i < 42; i++) {
+            ee_state.jacobian_base[i] = jacobian_array_[i];
+        }
+        for (int i=0; i < 16; i++) {
+            ee_state.htransform[i] = robot_state.O_T_EE[i];
+        }
+        ee_publisher.publish(ee_state);
+        
+        
     }
     //give the ros listener time to update its values:
     ros::spinOnce();
@@ -221,14 +265,15 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
 
     //interpolate between previous and next desired ros values:
     int64_t dt_msec = period.toMSec();
-    double i  = (double) std::min(timeUntilNextUpdate, dt_msec) / (timeUntilNextUpdate+0.00001); //compute the relative step size
+    double i  = (double) dt_msec / (timeUntilNextUpdate+0.00001); //compute the relative step size
+    i = std::min(i, 0.1); //limit how fast we are at most in following
     kp_   =   kp_ + i* (  rosKp_next -   kp_);
     kv_   =   kv_ + i* (  rosKv_next -   kv_);
     qd_   =   qd_ + i* (  rosQd_next -   qd_);
     dqd_  =  dqd_ + i* ( rosDQd_next -  dqd_);
     taud_ = taud_ + i* (rosTaud_next - taud_);
     timeUntilNextUpdate = std::max(int64_t(0), timeUntilNextUpdate - dt_msec); //adjust the remaining interpolation time
-
+    
     /*if no recent goal was posted, do some damage control*/
     if(watchdog_timeout < franka_time){ // ToDo goal_time + 500ms too long?
         if(watchDogTriggered == false) ROS_ERROR("pdcontrollernode: Nobody is sending me updates!! Stopping for safety.");

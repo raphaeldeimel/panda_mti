@@ -4,6 +4,11 @@
 #include <controllerinterface.h>
 #include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath//Matrix3x3.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <geometry_msgs/TransformStamped.h>
+
 class PDController : public ControllerInterface
 {
 
@@ -70,6 +75,8 @@ protected:
     const int publisher_culling_amount  = 10;  //the factor to reduce ros publishing to avoid taxing the realtime-ness
     int state_culling_count = 0;
     ros::Publisher common_state_publisher;
+    tf2_ros::TransformBroadcaster tf_broadcaster;
+    ros::Publisher ee_publisher;
     ros::Subscriber pdcontroller_goal_listener_;
 
 
@@ -122,6 +129,8 @@ protected:
 
     std::array<double, 6*dofs> jacobian_array_;
     JacobianMapped jacobian;
+
+    std::array<double, 6*dofs> jacobian_array_ee_;
 
     std::array<double, dofs*dofs> mass_matrix_array_;
     MassMatrixMapped joint_mass_matrix;

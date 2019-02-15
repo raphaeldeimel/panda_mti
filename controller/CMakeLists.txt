@@ -17,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   panda_msgs_mti 
   roscpp
   rospy
+  tf2_ros
+  tf2
 )
 
 find_package(Eigen3 REQUIRED)
@@ -27,6 +29,8 @@ catkin_package(
   CATKIN_DEPENDS
     panda_msgs_mti
     roscpp
+    tf2
+    tf2_ros
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
@@ -39,7 +43,7 @@ add_executable(pdcontroller
   
 )
 add_dependencies(pdcontroller 
-    panda_msgs_mti_generate_messages_cpp
+    ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(pdcontroller PUBLIC
   Franka::Franka
@@ -64,7 +68,7 @@ add_executable(pdcontroller_gripper
   
 )
 add_dependencies(pdcontroller_gripper 
-    panda_msgs_mti_generate_messages_cpp
+    ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(pdcontroller_gripper PUBLIC
   Franka::Franka
@@ -89,7 +93,7 @@ add_executable(statepublisher
   src/statepublisher.cpp
 )
 add_dependencies(statepublisher 
-    panda_msgs_mti_generate_messages_cpp
+        ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(statepublisher PUBLIC
   Franka::Franka

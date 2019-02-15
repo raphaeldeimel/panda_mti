@@ -107,7 +107,13 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
     franka::RobotMode robotmode = franka::RobotMode::kUserStopped;
     std::signal(SIGINT, exithandler); //register AFTER franka::Robot
 
-
+    //Make sure we get the correct data in the beginning, before switching on any control:
+    for (int i=10; i>0;i--) {
+        currentController->service(robot_state, idlePeriod);
+        ros::spinOnce();
+        idleLoopRate.sleep();
+    }
+    
     //Keep running depending on the panda state, 
     do {
         robot_state = robot.readOnce();
