@@ -3,7 +3,7 @@ panda:
     - 0.0 # joint 1
     - 0.0 # joint 2
     - 0.0 # joint 3
-    - 0.0 # joint 4
+    - -0.2 # joint 4
     - 0.0 # joint 5
     - 0.0 # joint 6
     - 0.0 # joint 7
@@ -12,6 +12,6 @@ panda:
     - 0.6 # joint 2
     - 0.4 # joint 3
     - 0.43 # joint 4
-    - 0.25 # joint 5
-    - 0.20 # joint 6
-    - 0.2 # joint 7
+    - 0.22 # joint 5
+    - 0.15 # joint 6
+    - 0.24 # joint 7
