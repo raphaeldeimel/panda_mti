@@ -25,6 +25,7 @@ import rosbag as _rosbag
 import sys
 import copy
 
+
 class PandaDynamicsModel():
     """
         Class for querying dynamical system properties of the Franka Panda robot
@@ -63,4 +64,54 @@ class PandaDynamicsModel():
 
     def getViscuousFrictionCoefficients(self, jointState=None):
         return self.viscuousFriction
+
+
+
+import PyKDL as _kdl
+import kdl_parser_py.urdf as _kdl_parser
+import rospy as _rospy
+
+class PandaURDFModel():
+
+    def __init__(self):
+        self.urdf_string = _rospy.get_param('/robot_description')
+        self.baseLinkName = 'panda_link0'
+        self.eeLinkName = 'panda_link7'
+        isSuccessful, self.kdltree = _kdl_parser.treeFromString(self.urdf_string)
+        if not isSuccessful:
+            raise RuntimeError("could not parse '/robot_description'")
+        self.ee_chain = self.kdltree.getChain(self.baseLinkName, self.eeLinkName)
+        self.fk_ee = _kdl.ChainFkSolverPos_recursive(self.ee_chain)
+        self.jointposition = _kdl.JntArray(7)
+        self.eeFrame = _kdl.Frame()
+        self.jacobian = _kdl.Jacobian(7)
+
+        #dynamics: (needs masses added to urdf!)
+        self.grav_vector = _kdl.Vector(0., 0., -9.81)  
+        self.dynParam = _kdl.ChainDynParam(self.ee_chain, self.grav_vector)
+        self.inertiaMatrix = _kdl.JntSpaceInertiaMatrix(7)
+
+        
+    def setJointPosition(self, jointPosition):
+        for i in range(7):
+            self.jointposition[i] = jointPosition[i]
+        self.jointposition[7] = jointPosition[7]
+
+        
+    def getEELocation(self):
+        self.fk_ee.JntToCart(self.jointposition, self.eeFrame)
+        print(self.eeFrame.p)
+        print(self.eeFrame.M)
+        return _np.array(self.eeFrame.p), _np.array(self.eeFrame.M)
+    
+    def getEEJacobian(self):
+        self.jac_ee.JntToJac(self.jointposition, jacobian)
+        print(self.jacobian)
+        return _np.array(self.jacobian)
+        
+    def getInertiaMatrix(self):
+        self.dynParam.JntToMass(self.jointposition, self.inertiaMatrix)
+        return self.inertiaMatrix
+
+
 
