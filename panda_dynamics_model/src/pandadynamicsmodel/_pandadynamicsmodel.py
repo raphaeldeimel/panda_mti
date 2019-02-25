@@ -84,6 +84,7 @@ class PandaURDFModel():
         self.fk_ee = _kdl.ChainFkSolverPos_recursive(self.ee_chain)
         self.jointposition = _kdl.JntArray(7)
         self.eeFrame = _kdl.Frame()
+        self.jac_ee = _kdl.ChainJntToJacSolver(self.ee_chain)
         self.jacobian = _kdl.Jacobian(7)
 
         #dynamics: (needs masses added to urdf!)
@@ -95,7 +96,7 @@ class PandaURDFModel():
     def setJointPosition(self, jointPosition):
         for i in range(7):
             self.jointposition[i] = jointPosition[i]
-        self.jointposition[7] = jointPosition[7]
+#        self.jointposition[7] = jointPosition[7] # I don't get what use the gripper would have here
 
         
     def getEELocation(self):
@@ -105,9 +106,16 @@ class PandaURDFModel():
         return _np.array(self.eeFrame.p), _np.array(self.eeFrame.M)
     
     def getEEJacobian(self):
-        self.jac_ee.JntToJac(self.jointposition, jacobian)
-        print(self.jacobian)
-        return _np.array(self.jacobian)
+        self.jac_ee.JntToJac(self.jointposition, self.jacobian)
+        
+        # numpy array constructor does not work for kdl stuff.
+        # There is likely to be a smarter way of doing this
+
+        np_jac = _np.zeros([6,7])
+        for row in range(6):
+            for col in range(7):
+                np_jac[row][col] = self.jacobian[row,col]
+        return np_jac
         
     def getInertiaMatrix(self):
         self.dynParam.JntToMass(self.jointposition, self.inertiaMatrix)
