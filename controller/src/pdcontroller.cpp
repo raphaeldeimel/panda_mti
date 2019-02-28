@@ -4,11 +4,7 @@
 #include <iostream>
 #include <iterator>
 
-
-
 #include <pdcontroller.h>
-#include "netft.h"
-
 
 
 std::array<double, 7> limitRate(const std::array<double, 7>& max_derivatives,
@@ -126,7 +122,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     minkp_ << 0,0,0,0,0,0,0;
     minkv_ << 0,0,0,0,0,0,0;
 
-    //soft borders
+    //elastic joint limits - counter torque
     zero_line_ << 0,0,0,0,0,0,0;
     border_zone_ = 0.85;
     torque_border_ = 10;
@@ -186,6 +182,8 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         for (int i=0;i<dofs;i++) { statemsg.tau[i] = tau_cmd.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.qd[i]  = dq_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dqd[i] = dqd_.coeff(i);}
+
+        for (int i=0;i<6;i++) {statemsg.ee_ft[i] = rdtdata_[i];}
 
         statemsg.q[dofs]   = gripper_q;
         statemsg.dq[dofs]  = 0.0;
