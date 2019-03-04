@@ -102,13 +102,15 @@ protected:
     DOFVector maxdesiredjointtorque_;
     DOFVector maxjointtorquechange_;
 
-	//soft borders
+    //soft borders
     DOFVector min_border_;
-	DOFVector max_border_;
-	DOFVector zero_line_;
-	double border_zone_;
-	double torque_border_;
+    DOFVector max_border_;
+    DOFVector zero_line_;
+    double border_zone_;
+    double torque_border_;
 
+    //netft data
+    double rdtdata_[6] = {};
 
     DOFVector maxkp_;
     DOFVector minkp_;

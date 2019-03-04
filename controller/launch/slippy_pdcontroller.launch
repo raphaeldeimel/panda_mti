@@ -3,13 +3,14 @@
 <launch>
   <arg name="for_real" default="true"/>
   <arg name="load_gripper" default="true" />
+  <arg name="load_stiction_comp" default="true" />
   <arg name="robot_ip" default="robot.franka.de" />
   <arg name="robot_name" default="panda" />
   <arg name="publish_rate" default="30" />
 
   <param name="/panda/hostname" value="panda"/>
 
-  <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />
+  <rosparam if="$(arg load_stiction_comp)" command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />
 
   <node if="$(arg for_real)" name="pdcontroller" pkg="controller_panda_mti" launch-prefix="chrt -f 40" type="pdcontroller" required="true" output="screen"/>
 </launch>
