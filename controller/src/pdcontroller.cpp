@@ -358,6 +358,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
 
     tau_cmd_unlimited_unfiltered_ <<
             tau_coriolis      //gravity torque is addedd by panda firmware
+            + tau_inertia_     //inertial forces
             - damping * dq_   //add damping
             + tau_error       //add pd-controller torques
             + taud_           //add desired torque
