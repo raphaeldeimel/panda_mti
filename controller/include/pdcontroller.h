@@ -128,6 +128,8 @@ protected:
     franka::RobotState robot_state_;
     DOFVectorMapped q_;
     DOFVectorMapped dq_;
+    DOFVectorMapped tau_ext_hat;
+    DOFVector ddq_;
 
     std::array<double, 6*dofs> jacobian_array_;
     JacobianMapped jacobian;
@@ -150,6 +152,9 @@ protected:
     DOFVector tau_cmd_unlimited_unfiltered_;
     DOFVector tau_cmd_unlimited_;
     DOFVector tau_cmd_limited_;
+    
+    DOFVector tau_inertia_;
+    MassMatrix joint_mass_matrix_emulated_;
 
     std::array<double, dofs> sent_torques_array_;
     DOFVectorMapped tau_cmd; // is to be commanded
