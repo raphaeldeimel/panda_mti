@@ -116,10 +116,11 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     //watchdogkv_ << 9,9,9,9,1,1,1;
     watchdogkv_ << 0,0,0,0,0,0,0;
     //additional virtual damping:
-    kd_ << 0,0,0,0,0,0,0;
+    kd_ << 0.1,0.1,0.1,0.1,0.1,0.1,0.5;
     //kd_ << 5,5,5,5,2,2,2,2;
     kp_ << 0,0,0,0,0,0,0;
     kv_ << 0,0,0,0,0,0,0;
+    dq_ << 0,0,0,0,0,0,0;
     ddq_ << 0,0,0,0,0,0,0;
 
     //values from franka's documentation:
