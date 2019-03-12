@@ -40,10 +40,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <string>
-
-#include "diagnostic_updater/DiagnosticStatusWrapper.h"
-#include "geometry_msgs/WrenchStamped.h"
-
+#include <csignal>
 namespace netft_rdt_driver
 {
 
@@ -56,10 +53,11 @@ public:
   ~NetFTRDTDriver();
 
   //! Get newest RDT data from netFT device
-  void getData(geometry_msgs::WrenchStamped &data);
+  void getData(double data[6]);
 
-  //! Add device diagnostics status wrapper
-  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &d);
+  void startStreaming(void);
+
+  void stopStreaming(void);
 
   //! Wait for new NetFT data to arrive.  
   // Returns true if new data has arrived, false it function times out
@@ -69,7 +67,6 @@ protected:
   void recvThreadFunc(void);
 
   //! Asks NetFT to start streaming data.
-  void startStreaming(void);
 
   enum {RDT_PORT=49152};
   std::string address_;
@@ -86,7 +83,7 @@ protected:
   std::string recv_thread_error_msg_; 
 
   //! Newest data received from netft device
-  geometry_msgs::WrenchStamped new_data_;
+  double new_rdt_data_[6];
   //! Count number of received <good> packets
   unsigned packet_count_;
   //! Count of lost RDT packets using RDT sequence number
@@ -103,8 +100,6 @@ protected:
 
   //! Packet count last time diagnostics thread published output
   unsigned diag_packet_count_;
-  //! Last time diagnostics was published
-  ros::Time last_diag_pub_time_;
   
   //! to keep track of out-of-order or duplicate packet
   uint32_t last_rdt_sequence_;

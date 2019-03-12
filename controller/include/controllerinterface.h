@@ -72,6 +72,7 @@ template < class ControllerInterfaceImpl > int mainloop()  {
   //get your params from ros config/launchfiles
   std::string hostname;
   rosnode.param<std::string>("/panda/hostname",hostname, "panda" );
+
   try {
     // connect to robot
     franka::Robot robot(hostname);

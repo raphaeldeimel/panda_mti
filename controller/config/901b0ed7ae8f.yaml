@@ -1,0 +1,17 @@
+panda:
+  torque_bias:
+    - -0.0 # joint 1
+    - -0.0 # joint 2
+    - -0.0 # joint 3
+    - 0.2 # joint 4
+    - 0.1 # joint 5
+    - 0.05 # joint 6
+    - -0.2 # joint 7
+  torque_stiction:
+    - 0.45 # joint 1
+    - 0.55 # joint 2
+    - 0.35 # joint 3
+    - 0.38 # joint 4
+    - 0.38 # joint 5
+    - 0.35 # joint 6
+    - 0.25 # joint 7
