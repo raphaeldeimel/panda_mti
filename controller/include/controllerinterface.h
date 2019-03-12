@@ -16,9 +16,11 @@
 //ros includes
 #include <ros/ros.h>
 #include <ros/time.h>
+#include <ros/console.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <panda_msgs_mti/RobotState8.h>
 #include <panda_msgs_mti/RobotEEState.h> 
+#include <panda_msgs_mti/MechanicalStateDistribution8TorquePosVel.h> 
 #include <sensor_msgs/JointState.h>
 
 
@@ -34,8 +36,22 @@ typedef Eigen::Matrix<double, 6,1> Wrench;
 typedef std::array<double, 42> JacobianBuffer;
 typedef Eigen::Map<Eigen::Matrix<double, 6,1> > JacobianMapped;
 
+typedef Eigen::Matrix<double, 7,7> MassMatrix;
 typedef std::array<double, 49> MassMatrixBuffer;
-typedef Eigen::Map<Eigen::Matrix<double, 7,7> > MassMatrixMapped;
+typedef Eigen::Map<MassMatrix > MassMatrixMapped;
+
+typedef Eigen::Array<double, 1*dofs_ros, 2*dofs_ros> GainsMatrix;
+
+//Mechanical State Distribution Declarations:
+const int MechanicalstateIndexTorque = 0;
+const int MechanicalstateIndexPosition = 1;
+const int MechanicalstateIndexVelocity = 2;
+const int MechanicalstateElementsCount = 3;
+typedef Eigen::Array<double, MechanicalstateElementsCount*dofs_ros, 1> DesiredMechanicalStateFlatMeans;
+typedef Eigen::Array<double, MechanicalstateElementsCount*dofs_ros, MechanicalstateElementsCount*dofs_ros> DesiredMechanicalStateFlatCovariances;
+//Eigen doesn't support multiarrays. Provide convenience functions to map tensor indices to index in flattened tensors:
+inline int flattenIndex(int m, int dof) {return   m * dofs_ros + dof ;}
+inline int flattenIndex(int m, int dof, int m2, int dof2) {return  dofs_ros*MechanicalstateElementsCount*dofs_ros* m +  dofs_ros*MechanicalstateElementsCount* dof +  dofs_ros * m2 + dof2;}
 
 /*
 Abstract controller interface that is used in the mainloop:

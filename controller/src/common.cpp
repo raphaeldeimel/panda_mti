@@ -139,10 +139,10 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
             std::cout << "Guiding Stopped"<< std::endl;
         } else if (robotmode == franka::RobotMode::kUserStopped) {
             currentController->service(robot_state, idlePeriod);
-            idleLoopRate.sleep();
         } else {
             break; //any other mode -> quit
         }
+        idleLoopRate.sleep();
     } while (not exitrequested);
     std::cout << "Leaving robot in mode: ";
     switch (robotmode) {

@@ -1,6 +1,8 @@
 // Copyright (c) 2018 Raphael Deimel
 #pragma once
 
+#include <Eigen/LU> 
+
 #include <controllerinterface.h>
 #include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
 
@@ -56,8 +58,8 @@ protected:
     DOFVector rosTaud_next;
     DOFVector rosQd_next;
     DOFVector rosDQd_next;
-    DOFVector rosKp_next;
-    DOFVector rosKv_next;
+    GainsMatrix rosKflat_next;
+
 
     const int64_t rosExpectedUpdatePeriod = 25; //steps in the interpolation interval 0...1, i.e  = hz(control loop) / hz(minimum ros update rate) = 1000/40
     int64_t timeUntilNextUpdate  = 25;  //interpolation variable
@@ -68,6 +70,9 @@ protected:
     double rosGripperKp;
     double rosGripperKv;
     double payload_mass;
+    
+    DesiredMechanicalStateFlatMeans desiredMeansFlat;
+    DesiredMechanicalStateFlatCovariances desiredCovariancesFlat;
 
     static constexpr double kDeltaTauMax = 0.5; //Panda firmware complains if we use 1.0 Nm/ms from the example, use 0.5 instead
     double damping = 0.; // TODO: set velocity-damping for additional safety
@@ -78,10 +83,12 @@ protected:
     tf2_ros::TransformBroadcaster tf_broadcaster;
     ros::Publisher ee_publisher;
     ros::Subscriber pdcontroller_goal_listener_;
+    ros::Subscriber desiredmstate_listener_;
 
 
     //ROS Message callback
     void callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg);
+    void callbackDesiredMechanicalState(const panda_msgs_mti::MechanicalStateDistribution8TorquePosVel::ConstPtr& msg);
 
     //limits rates of change of position and velocity received from ros
     bool limit_desired_motion();
@@ -112,22 +119,21 @@ protected:
     //netft data
     double rdtdata_[6] = {};
 
-    DOFVector maxkp_;
-    DOFVector minkp_;
-    DOFVector maxkv_;
-    DOFVector minkv_;
+    GainsMatrix maxK_;
+    GainsMatrix minK_;
 
     //controller variables / temporary values
     DOFVector qd_last_;
     DOFVector dqd_last_;
-    DOFVector kp_;
-    DOFVector kv_;
     DOFVector kd_;
+    GainsMatrix K_;
 
 
     franka::RobotState robot_state_;
     DOFVectorMapped q_;
     DOFVectorMapped dq_;
+    DOFVectorMapped tau_ext_hat;
+    DOFVector ddq_;
 
     std::array<double, 6*dofs> jacobian_array_;
     JacobianMapped jacobian;
@@ -150,6 +156,9 @@ protected:
     DOFVector tau_cmd_unlimited_unfiltered_;
     DOFVector tau_cmd_unlimited_;
     DOFVector tau_cmd_limited_;
+    
+    DOFVector tau_inertia_;
+    MassMatrix joint_mass_matrix_emulated_;
 
     std::array<double, dofs> sent_torques_array_;
     DOFVectorMapped tau_cmd; // is to be commanded
