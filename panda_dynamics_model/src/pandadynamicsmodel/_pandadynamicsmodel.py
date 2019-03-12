@@ -70,11 +70,15 @@ class PandaDynamicsModel():
 import PyKDL as _kdl
 import kdl_parser_py.urdf as _kdl_parser
 import rospy as _rospy
+import subprocess
 
 class PandaURDFModel():
 
-    def __init__(self):
-        self.urdf_string = _rospy.get_param('/robot_description')
+    def __init__(self, robotDescriptionString=None):
+        if robotDescriptionString is None:
+            self.urdf_string = _rospy.get_param('/robot_description')
+        else:
+            self.urdf_string = robotDescriptionString
         self.baseLinkName = 'panda_link0'
         self.eeLinkName = 'panda_link7'
         isSuccessful, self.kdltree = _kdl_parser.treeFromString(self.urdf_string)
