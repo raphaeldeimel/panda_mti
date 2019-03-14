@@ -122,7 +122,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
      dq_(robot_state_.dq.data()),
      tau_ext_hat(robot_state_.dq.data()),
      ddq_(),
-     tau_inertia_(),
+     tau_inertia_(),tau_cmd_ext_(),
      joint_mass_matrix_emulated_(),
      jacobian_array_(), jacobian(jacobian_array_.data()),
      mass_matrix_array_(), joint_mass_matrix(mass_matrix_array_.data()),
@@ -292,7 +292,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         for (int i=0;i<dofs;i++) { statemsg.q[i]   = q_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dq[i]  = dq_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.ddq[i]  = ddq_.coeff(i);}
-        for (int i=0;i<dofs;i++) { statemsg.tau[i] = tau_cmd.coeff(i);}
+        for (int i=0;i<dofs;i++) { statemsg.tau[i] = tau_cmd_ext_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.tau_ext[i] = tau_ext_hat.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.qd[i]  = qd_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dqd[i] = dqd_.coeff(i);}
@@ -425,13 +425,18 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
                 -1*q_.sign()*(zero_line_.max((q_ - max_border_)))
                 - (-1*q_).sign()*(zero_line_.min((q_ - min_border_))));
 
-    tau_cmd_unlimited_unfiltered_ <<
-            tau_coriolis      //gravity torque is addedd by panda firmware
-            + tau_inertia_     //inertial forces
-            - damping * dq_   //add damping
-            + tau_error       //add pd-controller torques
+    //torques that should affect tau_ext:
+    tau_cmd_ext_ <<
+              tau_error       //add pd-controller torques
             + taud_           //add desired torque
             + taud_ee         //add desired ee wrench force
+    ;
+
+    // add torques to compensate robot-internal effets:
+    tau_cmd_unlimited_unfiltered_ <<
+            tau_cmd_ext_
+            + tau_coriolis      //gravity torque is addedd by panda firmware
+            + tau_inertia_     //inertial forces
             + tau_bias     //add friction compensation
             + tau_stiction  * (dq_.sign() + dqd_.sign())
             + tau_border      //add spring effect in border region
