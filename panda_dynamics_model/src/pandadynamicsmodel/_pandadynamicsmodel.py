@@ -105,19 +105,17 @@ class PandaURDFModel():
         
     def getEELocation(self):
         self.fk_ee.JntToCart(self.jointposition, self.eeFrame)
-
-        transVec = _np.zeros(3)
-        for iVec in range(0,3):
-            transVec[iVec] = self.eeFrame.p[iVec]
+        hTransform = _np.zeros((4,4))
+        hTransform[3][3] = 1
         
-        rotMatrix = _np.zeros((3,3))
+        for iVec in range(0,3):
+            hTransform[iVec][3] = self.eeFrame.p[iVec]
+        
         for iMat in range(0,3):
             for jMat in range(0,3):
-                rotMatrix[iMat][jMat] = self.eeFrame.M[(iMat,jMat)]
-
-        #print(transVec)
-        #print(rotMatrix)
-        return transVec, rotMatrix
+                hTransform[iMat][jMat] = self.eeFrame.M[(iMat,jMat)]
+        
+        return hTransform
     
     def getEEJacobian(self):
         self.jac_ee.JntToJac(self.jointposition, self.jacobian)
