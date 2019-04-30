@@ -53,16 +53,16 @@ add_library(softhandmapper
 add_dependencies(grippercontroller 
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
-  ${PROJECT_NAME}_generate_messages_cpp
-  ${PROJECT_NAME}_gencpp
-  ${PROJECT_NAME}_gencfg
+#  ${PROJECT_NAME}_generate_messages_cpp
+#  ${PROJECT_NAME}_gencpp
+#  ${PROJECT_NAME}_gencfg
 )
 add_dependencies(softhandmapper 
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
-  ${PROJECT_NAME}_generate_messages_cpp
-  ${PROJECT_NAME}_gencpp
-  ${PROJECT_NAME}_gencfg
+#  ${PROJECT_NAME}_generate_messages_cpp
+#  ${PROJECT_NAME}_gencpp
+#  ${PROJECT_NAME}_gencfg
 )
 
 
