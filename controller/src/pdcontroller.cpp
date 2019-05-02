@@ -155,6 +155,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     
     qd_ = q_;
     dqd_ = dq_;
+    taud_.setZero();
     qd_last_ = qd_;
     dqd_last_ = dqd_;
     
