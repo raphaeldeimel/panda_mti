@@ -26,17 +26,20 @@ std::array<double, 7> limitRate(const std::array<double, 7>& max_derivatives,
 void PDController::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg)
 {
 
+
+    timeUntilNextUpdate = rosExpectedUpdatePeriod; //reset interpolation interval
+    watchdog_timeout = franka_time +  watchdogPeriod; //reset watchdog
+
     //internalize data:
     for (int i=0;i<dofs;i++) {  rosTaud_next(i) = msg->torque[i];}
     for (int i=0;i<dofs;i++) {  rosQd_next(i) = msg->position[i];}
     for (int i=0;i<dofs;i++) {  rosDQd_next(i) = msg->velocity[i];}
-    for (int i=0;i<dofs;i++) {  rosKp_next(i) = msg->kp[i];}
-    for (int i=0;i<dofs;i++) {  rosKv_next(i) = msg->kv[i];}
-
+    rosKflat_next.setZero(); 
+    for (int d=0;d<dofs_ros;d++) { rosKflat_next(flattenIndex(0,d), flattenIndex(0,d)) = msg->kp[d];}
+    for (int d=0;d<dofs_ros;d++) { rosKflat_next(flattenIndex(0,d), flattenIndex(1,d)) = msg->kv[d];}
+    
     //set future desired values
-    rosTaud_next = rosTaud_next.min(maxkp_).max(minkp_);
-    rosKp_next   = rosKp_next.min(maxkp_).max(minkp_);
-    rosKv_next   = rosKv_next.min(maxkv_).max(minkv_);
+    rosKflat_next   = rosKflat_next.min(maxK_).max(minK_);
     rosQd_next   = rosQd_next.min(maxjointposition_).max(minjointposition_);
     rosDQd_next  = rosDQd_next.min(maxjointvelocity_).max(-maxjointvelocity_);
     rosTaud_next = rosTaud_next.min(maxdesiredjointtorque_).max(-maxdesiredjointtorque_);
@@ -49,8 +52,66 @@ void PDController::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGo
     rosGripperKp = msg->kp[dofs];
     rosGripperKv = msg->kv[dofs];
 
+    
+    //ROS_DEBUG_STREAM(rosKflat_next);
+}
+
+
+/* Callback Handler to get desired Joints from promp Motion Generator */
+void PDController::callbackDesiredMechanicalState(const panda_msgs_mti::MechanicalStateDistribution8TorquePosVel::ConstPtr& msg)
+{
+
+    //sanity check msg
+    if  (desiredMeansFlat.size() !=  msg->meansMatrix.size()) {
+        ROS_ERROR("Receieved means matrix has not the right size!");
+        return;
+    }
+
+    //sanity check msg
+    if  (desiredCovariancesFlat.size() !=  msg->covarianceTensor.size()) {
+        ROS_ERROR("Receieved covariance tensor has not the right size!");
+        return;
+    }
+
+    //internalize data:
+    {
+        double* pData = desiredMeansFlat.data();
+        for (int i=0;i<desiredMeansFlat.size();i++) {pData[i] = msg->meansMatrix[i];}
+        pData = desiredCovariancesFlat.data();
+        for (int i=0;i<desiredCovariancesFlat.size();i++) {pData[i] = msg->covarianceTensor[i];}
+    }
+
     timeUntilNextUpdate = rosExpectedUpdatePeriod; //reset interpolation interval
     watchdog_timeout = franka_time +  watchdogPeriod; //reset watchdog
+
+
+    for (int i=0; i< dofs; i++){ rosTaud_next(i) = desiredMeansFlat(flattenIndex(MechanicalstateIndexTorque,  i));}
+    for (int i=0; i< dofs; i++){ rosQd_next(i)   = desiredMeansFlat(flattenIndex(MechanicalstateIndexPosition,i));}
+    for (int i=0; i< dofs; i++){ rosDQd_next(i)  = desiredMeansFlat(flattenIndex(MechanicalstateIndexVelocity,i));}
+    
+    //Compute the (1*dofs x 2*dofs) gains tensor:
+    Eigen::Matrix<double, 2*dofs_ros, 2*dofs_ros>  CovMotionMotion = desiredCovariancesFlat.block(1*dofs_ros,1*dofs_ros,2*dofs_ros,2*dofs_ros);
+    Eigen::Matrix<double, 1*dofs_ros, 2*dofs_ros>  CovTorqueMotion = desiredCovariancesFlat.block(0*dofs_ros,1*dofs_ros,1*dofs_ros,2*dofs_ros);
+    rosKflat_next = -CovTorqueMotion * CovMotionMotion.inverse();
+
+    rosKflat_next   = rosKflat_next.min(maxK_).max(minK_);
+    rosQd_next   = rosQd_next.min(maxjointposition_).max(minjointposition_);
+    rosDQd_next  = rosDQd_next.min(maxjointvelocity_).max(-maxjointvelocity_);
+    rosTaud_next = rosTaud_next.min(maxdesiredjointtorque_).max(-maxdesiredjointtorque_);
+    
+    
+    ROS_DEBUG_STREAM(rosKflat_next);
+
+    //dofs+1 == gripper dof
+    rosGripperTaud = desiredMeansFlat(flattenIndex(MechanicalstateIndexTorque,dofs));
+    rosGripperQd =  desiredMeansFlat(flattenIndex(MechanicalstateIndexPosition, dofs));
+    rosGripperDQd =  desiredMeansFlat(flattenIndex(MechanicalstateIndexVelocity, dofs));
+//    rosGripperKp = msg->[dofs];
+//    rosGripperKv = msg->kv[dofs];
+
+  
+//    ROS_DEBUG_STREAM("0:" << desiredCovariancesFlat(flattenIndex(1,3),flattenIndex(2,3)) << std::endl);
+
 }
 
 
@@ -61,15 +122,17 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
      dq_(robot_state_.dq.data()),
      tau_ext_hat(robot_state_.dq.data()),
      ddq_(),
-     tau_inertia_(),
+     tau_inertia_(),tau_cmd_ext_(),
      joint_mass_matrix_emulated_(),
      jacobian_array_(), jacobian(jacobian_array_.data()),
      mass_matrix_array_(), joint_mass_matrix(mass_matrix_array_.data()),
      coriolis_vector_(), tau_coriolis(coriolis_vector_.data()),
      sent_torques_array_(), tau_cmd(sent_torques_array_.data()),
      gripper_q(0.0),
-     rosKp_next(),rosKv_next(),rosTaud_next(),rosQd_next(),rosDQd_next(),
-     kp_(),kv_(), kd_()
+     rosTaud_next(),rosQd_next(),rosDQd_next(),
+     desiredMeansFlat(),desiredCovariancesFlat(),
+     kd_(),K_()
+
 {
     pRobot = &robot;
     pModel = new franka::Model(robot.loadModel());
@@ -81,6 +144,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     ee_publisher = rosnode.advertise<panda_msgs_mti::RobotEEState>("/panda/currentEEstate", 10);
 
     pdcontroller_goal_listener_ = rosnode.subscribe("/panda/pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
+    desiredmstate_listener_ = rosnode.subscribe("/panda/desiredmechanicalstate", 5, &PDController::callbackDesiredMechanicalState, this);
 
     std::vector <double> v;
     rosnode.getParam("panda/torque_bias", v);
@@ -118,8 +182,6 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     //additional virtual damping:
     kd_ << 0.1,0.1,0.1,0.1,0.1,0.1,0.5;
     //kd_ << 5,5,5,5,2,2,2,2;
-    kp_ << 0,0,0,0,0,0,0;
-    kv_ << 0,0,0,0,0,0,0;
     dq_ << 0,0,0,0,0,0,0;
     ddq_ << 0,0,0,0,0,0,0;
 
@@ -131,11 +193,14 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     maxjointaccelerationchange_ << 7500,    3750,    5000,    6250,    7500,   10000,   10000; // acceleration change limits
     maxjointtorque_             <<   87,      87,      87,      87,      12,      12,      12; // torque limits
     //additional limits:
-    maxkp_                      <<  100.,    100.,    100.,    100.,     50.,     50.,     50.;
-    maxkv_                      <<  100.,    100.,    100.,    100.,     30.,     30.,     30.;
+
+    for (int d=0; d<dofs_ros; d++)     {
+        maxK_.row(d) <<  100.,    100.,    100.,    100.,     50.,     50.,     50., 50,
+                  100.,    100.,    100.,    100.,     30.,     30.,     30., 10;
+        minK_.row(d) <<    0.,      0.,      0.,      0.,      0.,      0.,      0., 0,
+                    0.,      0.,      0.,      0.,      0.,      0.,      0., 0;
+    }
     maxdesiredjointtorque_      <<    6.,      6.,      6.,      6.,      2.,      2.,      2.;
-    minkp_ << 0,0,0,0,0,0,0;
-    minkv_ << 0,0,0,0,0,0,0;
 
     //elastic joint limits - counter torque
     zero_line_ << 0,0,0,0,0,0,0;
@@ -159,12 +224,14 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     qd_last_ = qd_;
     dqd_last_ = dqd_;
     
-    
-    rosKp_next << 0,0,0,0,0,0,0;
-    rosKv_next << 0,0,0,0,0,0,0;
+    desiredMeansFlat.setZero();
+    desiredCovariancesFlat.setZero();
+    K_.setZero();
+    rosKflat_next.setZero();
     rosTaud_next << 0,0,0,0,0,0,0;
     rosQd_next = q_;
     rosDQd_next << 0,0,0,0,0,0,0;
+
 
 
 }
@@ -226,7 +293,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         for (int i=0;i<dofs;i++) { statemsg.q[i]   = q_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dq[i]  = dq_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.ddq[i]  = ddq_.coeff(i);}
-        for (int i=0;i<dofs;i++) { statemsg.tau[i] = tau_cmd.coeff(i);}
+        for (int i=0;i<dofs;i++) { statemsg.tau[i] = tau_cmd_ext_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.tau_ext[i] = tau_ext_hat.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.qd[i]  = qd_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dqd[i] = dqd_.coeff(i);}
@@ -299,8 +366,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     int64_t dt_msec = period.toMSec();
     double i  = (double) dt_msec / (timeUntilNextUpdate+0.00001); //compute the relative step size
     i = std::min(i, 0.1); //limit how fast we are at most in following
-    kp_   =   kp_ + i* (  rosKp_next -   kp_);
-    kv_   =   kv_ + i* (  rosKv_next -   kv_);
+    K_    =   K_  + i* (rosKflat_next -  K_);
     qd_   =   qd_ + i* (  rosQd_next -   qd_);
     dqd_  =  dqd_ + i* ( rosDQd_next -  dqd_);
     taud_ = taud_ + i* (rosTaud_next - taud_);
@@ -312,8 +378,8 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         if(watchDogTriggered == false) ROS_ERROR("pdcontrollernode: Nobody is sending me updates!! Stopping for safety.");
         watchDogTriggered = true;
         /*keep the position-goal(?), but slow down*/
-        kp_.setZero();
-        kv_ = watchdogkv_;
+        K_.setZero();
+        for (int i=0; i<dofs; i++) {K_(flattenIndex(0,i), flattenIndex(1,i)) = watchdogkv_(i);}
         taud_.setZero();
         dqd_.setZero();
         //qd_ = q_; // hold position
@@ -329,7 +395,9 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
 
     service(robot_state, period); //get current values, communicate with ros
     
-
+    //shotcut to submatrices, also throws away the last dof (gripper)
+    auto Kp_ =  K_.block( flattenIndex(0,0), flattenIndex(0,0), dofs, dofs).matrix();
+    auto Kv_ =  K_.block( flattenIndex(0,0), flattenIndex(1,0), dofs, dofs).matrix();
 
     /*=============================== sanitizes commanded positions and velocities ==========================*/
     //limit_desired_motion();
@@ -349,7 +417,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
 
     taud_ee << (jacobian.transpose() * (desired_force_torque+desired_mass_wrench).matrix()).array();
     //The control law:
-    DOFVector tau_error =  kp_ * (qd_ - q_) +  kv_ * (dqd_ - dq_) - kd_ * dq_;
+    DOFVector tau_error =  Kp_ * (qd_ - q_).matrix() +  Kv_ * (dqd_ - dq_).matrix() - (kd_ * dq_).matrix();
 
     //inertia compensation:
     tau_inertia_ = (joint_mass_matrix-joint_mass_matrix_emulated_) * ddq_.matrix();
@@ -358,13 +426,18 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
                 -1*q_.sign()*(zero_line_.max((q_ - max_border_)))
                 - (-1*q_).sign()*(zero_line_.min((q_ - min_border_))));
 
-    tau_cmd_unlimited_unfiltered_ <<
-            tau_coriolis      //gravity torque is addedd by panda firmware
-            + tau_inertia_     //inertial forces
-            - damping * dq_   //add damping
-            + tau_error       //add pd-controller torques
+    //torques that should affect tau_ext:
+    tau_cmd_ext_ <<
+              tau_error       //add pd-controller torques
             + taud_           //add desired torque
             + taud_ee         //add desired ee wrench force
+    ;
+
+    // add torques to compensate robot-internal effets:
+    tau_cmd_unlimited_unfiltered_ <<
+            tau_cmd_ext_
+            + tau_coriolis      //gravity torque is addedd by panda firmware
+            + tau_inertia_     //inertial forces
             + tau_bias     //add friction compensation
             + tau_stiction  * (dq_.sign() + dqd_.sign())
             + tau_border      //add spring effect in border region
