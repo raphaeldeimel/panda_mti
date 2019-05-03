@@ -75,7 +75,6 @@ protected:
     DesiredMechanicalStateFlatCovariances desiredCovariancesFlat;
 
     static constexpr double kDeltaTauMax = 0.5; //Panda firmware complains if we use 1.0 Nm/ms from the example, use 0.5 instead
-    double damping = 0.; // TODO: set velocity-damping for additional safety
 
     const int publisher_culling_amount  = 10;  //the factor to reduce ros publishing to avoid taxing the realtime-ness
     int state_culling_count = 0;
@@ -123,6 +122,7 @@ protected:
     GainsMatrix minK_;
 
     //controller variables / temporary values
+    DOFVector tau_cmd_ext_;
     DOFVector qd_last_;
     DOFVector dqd_last_;
     DOFVector kd_;
