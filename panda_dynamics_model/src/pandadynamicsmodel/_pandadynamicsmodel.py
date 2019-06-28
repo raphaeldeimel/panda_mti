@@ -88,6 +88,9 @@ class PandaURDFModel():
         self.fk_ee = _kdl.ChainFkSolverPos_recursive(self.ee_chain)
         self.jointposition = _kdl.JntArray(7)
         self.eeFrame = _kdl.Frame()
+        # Calculate the jacobian expressed in the base frame of the chain, with reference point at the end effector of the *chain.
+        # http://docs.ros.org/hydro/api/orocos_kdl/html/classKDL_1_1ChainJntToJacSolver.html#details
+        # Sounds like base jacobian but will be used here for both
         self.jac_ee = _kdl.ChainJntToJacSolver(self.ee_chain)
         self.jacobian = _kdl.Jacobian(7)
 
@@ -117,7 +120,7 @@ class PandaURDFModel():
         
         return hTransform
     
-    def getEEJacobian(self):
+    def getJacobian(self):
         self.jac_ee.JntToJac(self.jointposition, self.jacobian)
         
         # numpy array constructor does not work for kdl stuff.
