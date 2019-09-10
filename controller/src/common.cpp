@@ -139,6 +139,10 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
             std::cout << "Guiding Stopped"<< std::endl;
         } else if (robotmode == franka::RobotMode::kUserStopped) {
             currentController->service(robot_state, idlePeriod);
+        } else if (robotmode == franka::RobotMode::kOther) {
+            std::cout << "Joints are locked!" << std::endl;
+            robot.read( callbackRead );
+            std::cout << "Joints are unlocked!" << std::endl;
         } else {
             break; //any other mode -> quit
         }
