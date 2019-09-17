@@ -140,9 +140,9 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
         } else if (robotmode == franka::RobotMode::kUserStopped) {
             currentController->service(robot_state, idlePeriod);
         } else if (robotmode == franka::RobotMode::kOther) {
-            std::cout << "Joints are locked!" << std::endl;
+            std::cout << std::string(62, '#' )<<"\n#" <<std::string(60,' ') << "#\n#" << std::string(60,' ') << "#\n#" <<std::string(60,' ') << "#\n#" << std::string(21, ' ' ) << "Joints are locked!" << std::string(21, ' ' )<< "#\n#" <<std::string(60,' ')<< "#\n#" << std::string(60,' ') << "#\n#" << std::string(60,' ') << "#\n" << std::string(62,'#') << std::endl;
             robot.read( callbackRead );
-            std::cout << "Joints are unlocked!" << std::endl;
+            std::cout << std::string(62, '#' )<<"\n#" <<std::string(60,' ') << "#\n#" << std::string(60,' ') << "#\n#" <<std::string(60,' ') << "#\n#" << std::string(20, ' ' ) << "Joints are unlocked!" << std::string(20, ' ' )<< "#\n#" <<std::string(60,' ')<< "#\n#" << std::string(60,' ') << "#\n#" << std::string(60,' ') << "#\n" << std::string(62,'#') << std::endl;
         } else {
             break; //any other mode -> quit
         }
