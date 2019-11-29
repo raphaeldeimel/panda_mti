@@ -98,7 +98,7 @@ template < class ControllerInterfaceImpl > int mainloop()  {
     retval = mainloopImpl(robot, &cntrl);
   } catch (const std::exception& ex) {
         // print exception
-        std::cout << "Exception: " << ex.what() << std::endl;
+        std::cout << "pdcontroller: Exception " << ex.what() << std::endl;
   }
 
  return retval;
