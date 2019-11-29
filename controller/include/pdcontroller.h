@@ -74,7 +74,7 @@ protected:
     DesiredMechanicalStateFlatMeans desiredMeansFlat;
     DesiredMechanicalStateFlatCovariances desiredCovariancesFlat;
 
-    static constexpr double kDeltaTauMax = 0.5; //Panda firmware complains if we use 1.0 Nm/ms from the example, use 0.5 instead
+    const double kDeltaTauMax = 0.5; //Panda firmware complains if we use 1.0 Nm/ms from the example, use 0.5 instead
 
     const int publisher_culling_amount  = 10;  //the factor to reduce ros publishing to avoid taxing the realtime-ness
     int state_culling_count = 0;
