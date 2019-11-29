@@ -15,6 +15,7 @@ class PDControllerGripperNetft : public PDController
 
   protected:
     netft_rdt_driver::NetFTRDTDriver* ptrNetft;
+    std::string netft_address;
     bool withNetft = true;
     bool withGripper = true;
     //bool withSoftHand = False;

@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
 PDControllerNetft::PDControllerNetft(franka::Robot& robot, std::string& hostname, ros::NodeHandle& rosnode) :
     PDController(robot, hostname, rosnode)
 {
+    ROS_INFO_STREAM(myName << ": Consider updating your launch file to use pdcontroller_gripper_netft instead!" << std::endl);
     std::string netft_address; // error in header
     rosnode.getParam("/netft/hostaddress", netft_address);
     try

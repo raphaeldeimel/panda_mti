@@ -139,6 +139,8 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     initial_state = robot.readOnce();
     robot_state_ =initial_state;
 
+    myName = rosnode.getNamespace();
+
     common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("/panda/currentstate", 10);
 
     ee_publisher = rosnode.advertise<panda_msgs_mti::RobotEEState>("/panda/currentEEstate", 10);
@@ -149,14 +151,14 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     std::vector <double> v;
     rosnode.getParam("panda/torque_bias", v);
     if (v.size() != dofs) {
-      ROS_WARN("panda/torque_bias length is wrong, ignoring it.");
+      ROS_WARN_STREAM(myName << "panda/torque_bias length is " << v.size() << " instead of " << dofs << ", ignoring it.");
     } else {
       for (int i=0; i<dofs; i++) {tau_bias[i] = v[i];}
     }
 
     rosnode.getParam("panda/torque_stiction", v);
     if (v.size() != dofs) {
-      ROS_WARN("panda/torque_stiction length is wrong, ignoring it.");
+      ROS_WARN_STREAM(myName << "panda/torque_stiction length is " << v.size() << " instead of " << dofs << ", ignoring it.");
     } else {
       for (int i=0; i<dofs; i++) {tau_stiction[i] = v[i];}
     }
@@ -210,13 +212,13 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     min_border_ = minjointposition_*border_zone_;
 
 
-    ROS_INFO_STREAM("initial robot joint state: {" << initial_state.q[0] << ", " <<
+    ROS_INFO_STREAM(myName << ": initial robot joint state is [" << initial_state.q[0] << ", " <<
     initial_state.q[1] << ", " <<
     initial_state.q[2] << ", " <<
     initial_state.q[3] << ", " <<
     initial_state.q[4] << ", " <<
     initial_state.q[5] << ", " <<
-    initial_state.q[6] << "}");
+    initial_state.q[6] << "]");
     
     qd_ = q_;
     dqd_ = dq_;
@@ -355,7 +357,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     static int k = 0;
     if (robot_state.control_command_success_rate > 0.05 && robot_state.control_command_success_rate < 0.90) {
         if (k <= 0) {
-            std::cout << "Warning: " << (1.0 - robot_state.control_command_success_rate)*100 << " out of 100 loops where too late." << std::endl;
+            ROS_WARN_STREAM(myName << ": " << (1.0 - robot_state.control_command_success_rate)*100 << " out of 100 loops where too late." << std::endl);
             k = 500;
         }
         k--;
@@ -375,7 +377,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     
     /*if no recent goal was posted, do some damage control*/
     if(watchdog_timeout < franka_time){ // ToDo goal_time + 500ms too long?
-        if(watchDogTriggered == false) ROS_ERROR("pdcontrollernode: Nobody is sending me updates!! Stopping for safety.");
+        if(watchDogTriggered == false) ROS_ERROR_STREAM(myName << ": Nobody is sending me updates!! Stopping for safety.");
         watchDogTriggered = true;
         /*keep the position-goal(?), but slow down*/
         K_.setZero();

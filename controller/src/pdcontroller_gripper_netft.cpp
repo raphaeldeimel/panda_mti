@@ -17,13 +17,9 @@ PDControllerGripperNetft::PDControllerGripperNetft(franka::Robot& robot, std::st
     PDController(robot, hostname, rosnode)
 {
 
-    withGripper = true;
-    rosnode.getParam("withGripper", withGripper);
-    withNetft = true;
-    rosnode.getParam("withNetft", withNetft);
-
-    std::string netft_address = "netft.local"; 
-    rosnode.getParam("netft_address", netft_address);
+    rosnode.param<bool>("withGripper",withGripper, true );
+    rosnode.param<bool>("withNetft",withNetft, true );
+    rosnode.param<std::string>("netft_address", netft_address, "netft.local" );
 
     ptrNetft=NULL;
     if (withNetft)   {
@@ -33,16 +29,23 @@ PDControllerGripperNetft::PDControllerGripperNetft(franka::Robot& robot, std::st
         }
         catch(std::runtime_error)
         {
-        ROS_ERROR_STREAM("pdcontrollernode: connection to netft at " << netft_address <<" failed.");
+        ROS_ERROR_STREAM(myName << ": connection to netft at " << netft_address <<" failed.");
         std::cout << netft_address;
 
         withNetft=false;
         }
     }
-    if (withGripper) {grippernonblocking::startGripperCommunicationInBackground(hostname);}
+    if (withGripper) {
+        try {
+            grippernonblocking::startGripperCommunicationInBackground(hostname);
+        } catch (const franka::Exception& ex) {
+            ROS_ERROR_STREAM(myName << ": Gripper not responding." << ex.what() << std::endl);
+            return;
+        }        
+    }    
 
-    if (withGripper) {ROS_INFO("pdcontrollernode: gripper enabled");}
-    if (ptrNetft!=NULL) {ROS_INFO_STREAM("pdcontrollernode: F/T sensor at " << netft_address << " enabled");}
+    if (withGripper) {ROS_INFO_STREAM(myName << ": gripper enabled");}
+    if (ptrNetft!=NULL) {ROS_INFO_STREAM(myName << ": F/T sensor at " << netft_address << " enabled");}
 }
 
 

@@ -75,13 +75,7 @@ void setGripperDesired(float q, float tau) {
 void startGripperCommunicationInBackground(std::string& hostname) 
 {
     //connect to gripper:
-    franka::Gripper* gripper = NULL;
-    try {
-        gripper = new franka::Gripper(hostname);
-    } catch (const franka::Exception& ex) {
-        std::cout << "pdcontroller: Gripper not responding." << ex.what() << std::endl;
-        return;
-    }
+    franka::Gripper* gripper = new franka::Gripper(hostname);
     //start the thread to handle gripper communication outside of realtime thread
     std::thread* GripperThread = new std::thread(gripperCommunicator, gripper); 
 }

@@ -24,7 +24,14 @@ int main(int argc, char** argv) {
 PDControllerGripper::PDControllerGripper(franka::Robot& robot, std::string& hostname, ros::NodeHandle& rosnode) :
      PDController(robot, hostname, rosnode)
 {
-    grippernonblocking::startGripperCommunicationInBackground(hostname); 
+    ROS_INFO_STREAM(myName << ": Consider updating your launch file to use pdcontroller_gripper_netft instead!" << std::endl);
+    try {
+      grippernonblocking::startGripperCommunicationInBackground(hostname);
+    } catch (const franka::Exception& ex) {
+      ROS_ERROR_STREAM(myName << ": Gripper not responding." << ex.what() << std::endl);
+      return;
+    }    
+
 }
 
 

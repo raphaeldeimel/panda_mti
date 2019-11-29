@@ -74,6 +74,9 @@ class ControllerInterface
     virtual void service(const franka::RobotState& robot_state, const franka::Duration period) = 0;
 
     std::string hostname;
+
+    std::string myName;
+
 };
 
 
