@@ -107,6 +107,32 @@ target_include_directories(pdcontroller_netft PUBLIC
   include
 )
 
+
+# netft+gripper, configuable at runtime
+add_executable(pdcontroller_gripper_netft 
+  src/common.cpp
+  src/pdcontroller.cpp
+  src/netft_rdt_driver.cpp
+  src/gripperbackground.cpp
+  src/pdcontroller_gripper_netft.cpp
+)
+
+add_dependencies(pdcontroller_gripper_netft 
+    panda_msgs_mti_generate_messages_cpp
+)
+
+target_link_libraries(pdcontroller_gripper_netft PUBLIC
+  Franka::Franka
+  ${catkin_LIBRARIES}
+)
+target_include_directories(pdcontroller_gripper_netft SYSTEM PUBLIC
+  ${Franka_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+target_include_directories(pdcontroller_gripper_netft PUBLIC
+  include
+)
+
 #Teaching controller 
 add_executable(statepublisher 
   src/common.cpp
