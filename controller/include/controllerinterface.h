@@ -84,10 +84,16 @@ Convenience Template for instantiating and running a specific controller class:
 int mainloopImpl(franka::Robot&, ControllerInterface* ControllerInterfaceImpl);
 template < class ControllerInterfaceImpl > int mainloop()  {
   int retval=1;
-  ros::NodeHandle rosnode;
+  ros::NodeHandle rosnode("~");
   //get your params from ros config/launchfiles
   std::string hostname;
-  rosnode.param<std::string>("/panda/hostname",hostname, "panda" );
+
+  //delete this in the future:
+  if (rosnode.param<std::string>("/panda/hostname",hostname, "panda" )) {
+    ROS_WARN("Using /panda/hostname is deprecated. Please set panda_address as a private parameter instead!");
+  }
+
+  rosnode.param<std::string>("panda_address",hostname, "panda" );
 
   try {
     // connect to robot
