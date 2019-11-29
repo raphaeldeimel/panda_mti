@@ -151,14 +151,14 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     std::vector <double> v;
     rosnode.getParam("panda/torque_bias", v);
     if (v.size() != dofs) {
-      ROS_WARN_STREAM(myName << "panda/torque_bias length is " << v.size() << " instead of " << dofs << ", ignoring it.");
+      ROS_WARN_STREAM(myName << ": panda/torque_bias length is " << v.size() << " instead of " << dofs << ", ignoring it.");
     } else {
       for (int i=0; i<dofs; i++) {tau_bias[i] = v[i];}
     }
 
     rosnode.getParam("panda/torque_stiction", v);
     if (v.size() != dofs) {
-      ROS_WARN_STREAM(myName << "panda/torque_stiction length is " << v.size() << " instead of " << dofs << ", ignoring it.");
+      ROS_WARN_STREAM(myName << ": panda/torque_stiction length is " << v.size() << " instead of " << dofs << ", ignoring it.");
     } else {
       for (int i=0; i<dofs; i++) {tau_stiction[i] = v[i];}
     }
