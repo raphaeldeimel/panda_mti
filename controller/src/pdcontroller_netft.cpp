@@ -17,7 +17,7 @@ PDControllerNetft::PDControllerNetft(franka::Robot& robot, std::string& hostname
 {
     ROS_INFO_STREAM(myName << ": Consider updating your launch file to use pdcontroller_gripper_netft instead!" << std::endl);
     std::string netft_address; // error in header
-    rosnode.getParam("/netft/hostaddress", netft_address);
+    rosnode.param<std::string>("netft_address", netft_address, "netft.local" );
     try
     {
         ptrNetft = new netft_rdt_driver::NetFTRDTDriver(netft_address);

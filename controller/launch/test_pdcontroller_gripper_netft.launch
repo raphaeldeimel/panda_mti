@@ -13,12 +13,8 @@
   <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm.urdf.xacro"/>
   <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
 
-
   <node     if="$(arg for_real)"   name="pdcontroller_gripper_netft" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="pdcontroller_gripper_netft" required="true"  output="screen" >
-    <param  name="panda_address" value="panda"/>  
-    <param  name="netft_address" value="192.168.11.3"/>  
-    <param  name="withNetft" value='true' />
-    <param  name="withGripper" value='true' />
+    <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />
   </node>
   
   
