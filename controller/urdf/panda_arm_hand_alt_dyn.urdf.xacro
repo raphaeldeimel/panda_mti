@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda">
+  <xacro:property name="use_alt_dyn_params" value="True" />
+  <xacro:include filename="$(find controller_panda_mti)/urdf/alternative_dyn_params.xacro" />
+  <xacro:include filename="$(find controller_panda_mti)/urdf/panda_arm_hand.urdf.xacro" />
+</robot>
