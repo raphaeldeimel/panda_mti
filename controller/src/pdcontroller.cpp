@@ -3,8 +3,10 @@
 #include <cmath>
 #include <iostream>
 #include <iterator>
-
+#include <kdl_parser/kdl_parser.hpp>
 #include <pdcontroller.h>
+
+
 
 
 std::array<double, 7> limitRate(const std::array<double, 7>& max_derivatives,
@@ -161,7 +163,29 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
       for (int i=0; i<dofs; i++) {tau_stiction[i] = v[i];}
     }
 
-    gravity_vector << 0.,0.,-9.81,0.,0.,0.;
+
+
+    KDL::Tree my_tree;
+    std::string robot_desc_string;
+    rosnode.param("robot_description", robot_desc_string, std::string());
+    if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
+       ROS_ERROR("Failed to construct kdl tree");
+    }
+    
+    KDL::Chain chain;
+
+    if (!my_tree.getChain("panda_link0",
+                             "panda_link7",
+                             chain))
+    {
+        ROS_ERROR("Failed to get chain from KDL tree");
+    }
+
+    gravity_vector << 0., 0., -9.81, 0., 0., 0.;
+
+    KDL::Vector gravity_vector_kdl(0.0,0.0,-9.81);
+
+    chainDynParam = new KDL::ChainDynParam(chain, gravity_vector_kdl);
 
     franka_time = franka::Duration(0);
     watchdog_timeout = franka_time;
@@ -280,7 +304,17 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     //compute things from robot state:
     jacobian_array_ = pModel->zeroJacobian(franka::Frame::kEndEffector, robot_state);
     jacobian_array_ee_ = pModel->bodyJacobian(franka::Frame::kEndEffector, robot_state);
-    mass_matrix_array_ = pModel->mass(robot_state);
+    
+    // In this case we are replacing the mass matrix from franka model with KDL one
+    // mass_matrix_array_ = pModel->mass(robot_state);
+    KDL::JntArray jntarray(7);
+    Eigen::Map<Eigen::VectorXd> q_eigen(robot_state_.q.data(),7);
+    jntarray.data = q_eigen;
+    KDL::JntSpaceInertiaMatrix inertMatrix(7);
+    Eigen::Map<Eigen::Matrix<double,7,7,Eigen::RowMajor>> mass_eigen(mass_matrix_array_.data());
+    inertMatrix.data = mass_eigen;
+    chainDynParam->JntToMass( jntarray, inertMatrix);
+
     coriolis_vector_ = pModel->coriolis(robot_state);
 
 
