@@ -19,9 +19,6 @@
           <mesh filename="package://${description_pkg}/meshes/collision/link0.stl"/>
         </geometry>
       </collision>
-      <xacro:if value="${use_alt_dyn_params}">
-        <xacro:insert_block name="dyn_param_link0" />
-      </xacro:if>
     </link>
     <link name="${arm_id}_link1">
       <visual>
@@ -172,6 +169,9 @@
           <mesh filename="package://${description_pkg}/meshes/collision/link7.stl"/>
         </geometry>
       </collision>
+      <xacro:if value="${use_alt_dyn_params}">
+        <xacro:insert_block name="dyn_param_link7" />
+      </xacro:if>
     </link>
     <joint name="${arm_id}_joint7" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>

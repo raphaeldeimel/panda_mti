@@ -3,7 +3,7 @@
 <launch>
   <arg name="for_real" default="true"/>
 
-  <arg name="load_gripper" default="false" />
+  <arg name="load_gripper" default="true" />
   <arg name="load_stiction_comp" default="true" />
 
   <arg name="robot_ip" default="robot.franka.de" />
@@ -12,8 +12,8 @@
   <param if="$(arg for_real)" name="/panda/hostname" value="panda"/>
   <rosparam if="$(arg load_stiction_comp)" command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />
   
-  <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find controller_panda_mti)/urdf/panda_arm.urdf.xacro"/>
-  <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find controller_panda_mti)/urdf/panda_arm_hand.urdf.xacro" />
+  <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find controller_panda_mti)/urdf/panda_arm_hand_alt_dyn.urdf.xacro"/>
+  <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find controller_panda_mti)/urdf/panda_arm_hand_alt_dyn.urdf.xacro" />
 
 
   <node     if="$(arg for_real)"   name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="pdcontroller" required="true"  output="screen"/>
@@ -21,8 +21,8 @@
   
 
   <node unless="$(arg for_real)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-    <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  '$(find controller_panda_mti)/urdf/panda_arm_hand.urdf.xacro'" />
-    <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  '$(find controller_panda_mti)/urdf/panda_arm.urdf.xacro'" />
+    <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  '$(find controller_panda_mti)/urdf/panda_arm_hand_alt_dyn.urdf.xacro'" />
+    <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  '$(find controller_panda_mti)/urdf/panda_arm_hand_alt_dyn.urdf.xacro'" />
     <param  if="$(arg load_gripper)" name="publish_default_positions" value="true" />
   </node>
 <!--  <node unless="$(arg for_real)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find phastapromp)/launch/runBehavior.rviz"/>-->
