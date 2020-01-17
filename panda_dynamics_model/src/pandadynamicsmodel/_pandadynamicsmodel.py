@@ -70,11 +70,15 @@ class PandaDynamicsModel():
 import PyKDL as _kdl
 import kdl_parser_py.urdf as _kdl_parser
 import rospy as _rospy
+import subprocess
 
 class PandaURDFModel():
 
-    def __init__(self):
-        self.urdf_string = _rospy.get_param('/robot_description')
+    def __init__(self, robotDescriptionString=None):
+        if robotDescriptionString is None:
+            self.urdf_string = _rospy.get_param('/robot_description')
+        else:
+            self.urdf_string = robotDescriptionString
         self.baseLinkName = 'panda_link0'
         self.eeLinkName = 'panda_link7'
         isSuccessful, self.kdltree = _kdl_parser.treeFromString(self.urdf_string)
@@ -84,6 +88,9 @@ class PandaURDFModel():
         self.fk_ee = _kdl.ChainFkSolverPos_recursive(self.ee_chain)
         self.jointposition = _kdl.JntArray(7)
         self.eeFrame = _kdl.Frame()
+        # Calculate the jacobian expressed in the base frame of the chain, with reference point at the end effector of the *chain.
+        # http://docs.ros.org/hydro/api/orocos_kdl/html/classKDL_1_1ChainJntToJacSolver.html#details
+        # Sounds like base jacobian but will be used here for both
         self.jac_ee = _kdl.ChainJntToJacSolver(self.ee_chain)
         self.jacobian = _kdl.Jacobian(7)
 
@@ -101,11 +108,19 @@ class PandaURDFModel():
         
     def getEELocation(self):
         self.fk_ee.JntToCart(self.jointposition, self.eeFrame)
-        print(self.eeFrame.p)
-        print(self.eeFrame.M)
-        return _np.array(self.eeFrame.p), _np.array(self.eeFrame.M)
+        hTransform = _np.zeros((4,4))
+        hTransform[3][3] = 1
+        
+        for iVec in range(0,3):
+            hTransform[iVec][3] = self.eeFrame.p[iVec]
+        
+        for iMat in range(0,3):
+            for jMat in range(0,3):
+                hTransform[iMat][jMat] = self.eeFrame.M[(iMat,jMat)]
+        
+        return hTransform
     
-    def getEEJacobian(self):
+    def getJacobian(self):
         self.jac_ee.JntToJac(self.jointposition, self.jacobian)
         
         # numpy array constructor does not work for kdl stuff.
