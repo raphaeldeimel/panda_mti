@@ -13,7 +13,7 @@ except ImportError:
     setup(name='pandadynamicsmodel',
           version='0.1.0',
           description='Package to load the dynamics model of Franka Emika panda robot',
-          author='Raphael Deimel, Jan Martin',
+          author='Raphael Deimel, Jan Martin, Roman Kolbert',
           author_email='raphael.deimel@tu-berlin.de',
           url='http://www.mti-engage.tu-berlin.de/',
           packages=['pandadynamicsmodel'],

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#Copyright 2017 Raphael Deimel
+#Copyright 2020 Raphael Deimel, Roman Kolbert
 #
 #Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 #
@@ -12,7 +12,8 @@
 
 """
 @author: Raphael Deimel
-@copyright: 2017
+@author: Roman Kolbert
+@copyright: 2020
 @licence: 2-clause BSD licence
 
 
@@ -26,44 +27,44 @@ import sys
 import copy
 
 
-class PandaDynamicsModel():
-    """
-        Class for querying dynamical system properties of the Franka Panda robot
-        
-        Uses pyfranka to access the C++ library libfranka
-    """
-    def __init__(self, 
-            load_mass = 0.5, 
-            load_I = 0.5*_np.diag([0.01, 0.01, 0.01]), 
-            load_masscenter = [0.1, 0.1, 0.0], 
-            motorInertias = [0.01, 0.01, 0.01, 0.003,0.003,0.003,0.003, 0.01],
-            viscuousFriction = [ 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
-            frankaModelLibraryPath = '/usr/local/lib/libfrankamodellibrary.so',
-            ):
-        import pyfranka
-        self.pandaDynamicsModel = pyfranka.Model(frankaModelLibraryPath)
-        self.dofs = 8
-        self.load_mass = load_mass
-        self.load_I = list(load_I.flat)
-        self.load_masscenter = load_masscenter
-        self.jointSpaceMassMatrix = _np.eye(self.dofs, self.dofs)
-        self.jointSpaceInvMassMatrix = _np.eye(self.dofs, self.dofs)
-        self.motorInertiaMatrix = _np.diag(motorInertias) #projected inertia of the motor/gearbox
-        self.viscuousFriction = _np.array(viscuousFriction)
-        
+    #class PandaFrankaModel():
+#    """
+#        Class for querying dynamical system properties of the Franka Panda robot
+#        
+#        Uses pyfranka to access the C++ library libfranka
+#    """
+#    def __init__(self, 
+#            load_mass = 0.5, 
+#            load_I = 0.5*_np.diag([0.01, 0.01, 0.01]), 
+#            load_masscenter = [0.1, 0.1, 0.0], 
+#            motorInertias = [0.01, 0.01, 0.01, 0.003,0.003,0.003,0.003, 0.01],
+#            viscuousFriction = [ 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
+#            frankaModelLibraryPath = '/usr/local/lib/libfrankamodellibrary.so',
+#            ):
+#        import pyfranka
+#        self.pandaDynamicsModel = pyfranka.Model(frankaModelLibraryPath)
+#        self.dofs = 8
+#        self.load_mass = load_mass
+#        self.load_I = list(load_I.flat)
+#        self.load_masscenter = load_masscenter
+#        self.jointSpaceMassMatrix = _np.eye(self.dofs, self.dofs)
+#        self.jointSpaceInvMassMatrix = _np.eye(self.dofs, self.dofs)
+#        self.motorInertiaMatrix = _np.diag(motorInertias) #projected inertia of the motor/gearbox
+#        self.viscuousFriction = _np.array(viscuousFriction)
+#        
 
-    def getInertiaMatrix(self, position):
-        position = _np.asarray(position)
-        dofs_arm = 7
-        inertias = 100*self.motorInertiaMatrix.copy()
-        massInertia = self.pandaDynamicsModel.mass(list(position[:dofs_arm].flat), self.load_I,self.load_mass,self.load_masscenter)
-        for j in range(dofs_arm):
-            for i in range(dofs_arm):
-                inertias[i,j] += massInertia[i+dofs_arm*j]
-        return inertias
+#    def getInertiaMatrix(self, position):
+#        position = _np.asarray(position)
+#        dofs_arm = 7
+#        inertias = 100*self.motorInertiaMatrix.copy()
+#        massInertia = self.pandaDynamicsModel.mass(list(position[:dofs_arm].flat), self.load_I,self.load_mass,self.load_masscenter)
+#        for j in range(dofs_arm):
+#            for i in range(dofs_arm):
+#                inertias[i,j] += massInertia[i+dofs_arm*j]
+#        return inertias
 
-    def getViscuousFrictionCoefficients(self, jointState=None):
-        return self.viscuousFriction
+#    def getViscuousFrictionCoefficients(self, jointState=None):
+#        return self.viscuousFriction
 
 
 
@@ -136,5 +137,28 @@ class PandaURDFModel():
         self.dynParam.JntToMass(self.jointposition, self.inertiaMatrix)
         return self.inertiaMatrix
 
+
+    def getXrefT(self, jointpose, r=2, g=2):
+        """
+        returns a tuple of joint pose, EE location, task space map for motion and effort
+        """
+        self.setJointPosition(jointpose)
+        jaco = self.getJacobian() 
+        base_ee = self.getEELocation()
+        
+        Xref  = _np.zeros((r,g,8))
+        Yref  = _np.zeros((r,g,8))
+        T  = _np.zeros((r,g,8))
+
+        
+        ee_origin_ee = _np.array([0,0,0,1])
+        ee_origin_base = _np.dot(base_ee, origin)
+        
+        
+
+        Yref = jointpose
+        Xref = ee_origin
+
+        
 
 

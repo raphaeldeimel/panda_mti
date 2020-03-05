@@ -2,7 +2,7 @@
 <package>
   <name>panda_dynamics_model</name>
   <version>0.1.0</version>
-  <description> Python package to load the Franka Panda robot's dynamics model using python-libfranka</description>
+  <description> Python package to load and access the Franka Panda robot's dynamics model using KDL </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
