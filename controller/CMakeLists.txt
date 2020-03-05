@@ -19,8 +19,10 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   tf2_ros
   tf2
+  kdl_parser
 )
 
+find_package(orocos_kdl REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Franka 0.3.0 REQUIRED)
 

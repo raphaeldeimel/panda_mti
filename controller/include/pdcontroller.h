@@ -11,6 +11,8 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 
+#include <kdl/chaindynparam.hpp>
+
 class PDController : public ControllerInterface
 {
 
@@ -84,6 +86,7 @@ protected:
     ros::Subscriber pdcontroller_goal_listener_;
     ros::Subscriber desiredmstate_listener_;
 
+    KDL::ChainDynParam* chainDynParam = nullptr;
 
     //ROS Message callback
     void callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg);
