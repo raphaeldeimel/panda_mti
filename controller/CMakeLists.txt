@@ -1,14 +1,14 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(controller_panda_mti)
 
-set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 #make sure to use the full available cpu instruction set
-SET(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+#SET(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+#SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -march=native")
 
 #is somehow missing although its part of libstd:
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -latomic" )
