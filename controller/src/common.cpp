@@ -148,38 +148,39 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
         }
         idleLoopRate.sleep();
     } while (not exitrequested);
-    ROS_INFO_STREAM(currentController->myName << ": Leaving robot in mode: ");
+
+    std::string modestr = "unknown";
     switch (robotmode) {
         case franka::RobotMode::kOther:
-            ROS_INFO("kOther");
+            modestr = "kOther";
             break;
         case franka::RobotMode::kIdle:
+            modestr = "kIdle";
             ROS_INFO("kIdle");
             break;
         case franka::RobotMode::kMove:
-            ROS_INFO("kMove");
+            modestr = "kMove";
             break;
         case franka::RobotMode::kGuiding:
-            ROS_INFO("kGuiding");
+            modestr = "kGuiding";
             break;
         case franka::RobotMode::kReflex:
-            ROS_INFO_STREAM( "kReflex" << std::endl << "cartesian collision flags: ");
+            modestr = "kReflex";
+
+            ROS_ERROR_STREAM("Panda shut down due to Reflex!: " << robot_state.last_motion_errors);
+            //ROS_INFO_STREAM( "cartesian collision flags: ");
             //for (int i=0;i<6;i++) {ROS_INFO(robot_state.cartesian_collision[i]);}
-            ROS_INFO_STREAM( std::endl << "joint collision flags: ");
+            //ROS_INFO_STREAM( std::endl << "joint collision flags: ");
             //for (int i=0;i<7;i++) {ROS_INFO(robot_state.joint_collision[i]);}
             break;
         case franka::RobotMode::kUserStopped:
-            ROS_INFO("kUserStopped");
+            modestr = "kUserStopped";
             break;
         case franka::RobotMode::kAutomaticErrorRecovery:
-            ROS_INFO("kAutomaticErrorRecovery");
+            modestr = "kAutomaticErrorRecovery";
             break;
     }
-    ROS_INFO_STREAM(
-        std::endl << 
-        "Last Motion Errors: " << robot_state.last_motion_errors << std::endl <<
-        "Current Errors: " << robot_state.current_errors << std::endl
-    );
+    ROS_INFO_STREAM(currentController->myName << ": Leaving robot in mode: " << modestr << std::endl);
   return 0;
 }
 
