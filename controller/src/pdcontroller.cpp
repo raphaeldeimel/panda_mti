@@ -124,10 +124,11 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
      dq_(robot_state_.dq.data()),
      tau_ext_hat(robot_state_.dq.data()),
      ddq_(),
-     tau_inertia_(),tau_cmd_ext_(),
+     tau_cmd_ext_(),
      joint_mass_matrix_emulated_(),
      jacobian_array_(), jacobian(jacobian_array_.data()),
-     mass_matrix_array_(), joint_mass_matrix(mass_matrix_array_.data()),
+     mass_matrix_array_(), joint_mass_matrix(mass_matrix_array_.data()), 
+     q_kdl(7), joint_mass_matrix_kdl(7),
      coriolis_vector_(), tau_coriolis(coriolis_vector_.data()),
      sent_torques_array_(), tau_cmd(sent_torques_array_.data()),
      gripper_q(0.0),
@@ -165,29 +166,34 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
       for (int i=0; i<dofs; i++) {tau_stiction[i] = v[i];}
     }
 
-
-
-    KDL::Tree my_tree;
-    std::string robot_desc_string;
-    rosnode.param("robot_description", robot_desc_string, std::string());
-    if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
-       ROS_ERROR("Failed to construct kdl tree");
-    }
-    
-    KDL::Chain chain;
-
-    if (!my_tree.getChain("panda_link0",
-                             "panda_link7",
-                             chain))
-    {
-        ROS_ERROR("Failed to get chain from KDL tree");
+    //kd_ << 0.1,0.1,0.1,0.1,0.1,0.1,0.5;
+    rosnode.getParam("damping", v);
+    if (v.size() != dofs) {
+      ROS_WARN_STREAM(myName << ": damping length is " << v.size() << " instead of " << dofs << ", ignoring it.");
+    } else {
+      for (int i=0; i<dofs; i++) {kd_[i] = v[i];}
     }
 
     gravity_vector << 0., 0., -9.81, 0., 0., 0.;
-
     KDL::Vector gravity_vector_kdl(0.0,0.0,-9.81);
 
-    chainDynParam = new KDL::ChainDynParam(chain, gravity_vector_kdl);
+    std::string robot_desc_string;
+    rosnode.param("robot_description", robot_desc_string, std::string());
+
+    bool success;
+    success = kdl_parser::treeFromString(robot_desc_string, kdl_tree);
+    if (!success) {ROS_ERROR_STREAM(myName <<": Failed to construct kdl tree from parameter robot_description");
+    } else {
+        success = kdl_tree.getChain("panda_link0",
+                                "panda_link8",
+                                kdl_chain);
+    }
+    if (!success) {
+           ROS_ERROR_STREAM(myName <<": Failed to get chain panda_link1 to panda_link8 from KDL tree");
+    } else {
+            chainDynParam = new KDL::ChainDynParam(kdl_chain, gravity_vector_kdl);
+            urdf_has_inertias = true;
+    }
 
     franka_time = franka::Duration(0);
     watchdog_timeout = franka_time;
@@ -302,22 +308,21 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     ddq_ += 0.01 * filter_gains_asymmetry * ddq_delta;
 
 
-
-    //compute things from robot state:
-    jacobian_array_ = pModel->zeroJacobian(franka::Frame::kEndEffector, robot_state);
-    jacobian_array_ee_ = pModel->bodyJacobian(franka::Frame::kEndEffector, robot_state);
     
-    // In this case we are replacing the mass matrix from franka model with KDL one
-    // mass_matrix_array_ = pModel->mass(robot_state);
-    KDL::JntArray jntarray(7);
-    Eigen::Map<Eigen::VectorXd> q_eigen(robot_state_.q.data(),7);
-    jntarray.data = q_eigen;
-    KDL::JntSpaceInertiaMatrix inertMatrix(7);
-    Eigen::Map<Eigen::Matrix<double,7,7,Eigen::RowMajor>> mass_eigen(mass_matrix_array_.data());
-    inertMatrix.data = mass_eigen;
-    chainDynParam->JntToMass( jntarray, inertMatrix);
-
-    coriolis_vector_ = pModel->coriolis(robot_state);
+    if (urdf_has_inertias) {
+        q_kdl.data = q_; 
+        chainDynParam->JntToMass( q_kdl, joint_mass_matrix_kdl);
+        joint_mass_matrix = joint_mass_matrix_kdl.data;
+        coriolis_vector_ = pModel->coriolis(robot_state); //TODO: not taken from URDF model yet
+        jacobian_array_ = pModel->zeroJacobian(franka::Frame::kEndEffector, robot_state_);
+        jacobian_array_ee_ = pModel->bodyJacobian(franka::Frame::kEndEffector, robot_state_);
+    } else {
+        //compute things from robot state:
+        jacobian_array_ = pModel->zeroJacobian(franka::Frame::kEndEffector, robot_state_);
+        jacobian_array_ee_ = pModel->bodyJacobian(franka::Frame::kEndEffector, robot_state_);
+        mass_matrix_array_ = pModel->mass(robot_state);
+        coriolis_vector_ = pModel->coriolis(robot_state);
+    }
 
 
     if (state_culling_count-- <= 0) {

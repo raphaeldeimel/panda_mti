@@ -143,6 +143,14 @@ protected:
 
     std::array<double, 6*dofs> jacobian_array_ee_;
 
+    bool urdf_has_inertias = false;
+    //views to let KDL write into our internal arrays:
+    KDL::Tree kdl_tree;
+    KDL::Chain kdl_chain;
+    KDL::ChainDynParam* chainDynParam = nullptr;
+    KDL::JntArray q_kdl;
+    KDL::JntSpaceInertiaMatrix joint_mass_matrix_kdl;
+
     std::array<double, dofs*dofs> mass_matrix_array_;
     MassMatrixMapped joint_mass_matrix;
 
