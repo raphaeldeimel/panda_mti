@@ -7,6 +7,10 @@
 #include <pdcontroller.h>
 
 
+//for debug prints:
+std::string sep = "\n----------------------------------------\n";
+Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
+
 
 
 std::array<double, 7> limitRate(const std::array<double, 7>& max_derivatives,
@@ -140,7 +144,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     pRobot = &robot;
     pModel = new franka::Model(robot.loadModel());
     initial_state = robot.readOnce();
-    robot_state_ =initial_state;
+    robot_state_ = initial_state;    
 
     myName = rosnode.getNamespace();
 
@@ -206,14 +210,13 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     payload_mass = 0.0;
     
     joint_mass_matrix_emulated_ = Eigen::MatrixXd::Identity(7,7);
-    //joint_masses_synthetic.diagonal() << 0,0,0,0,0,0,0;
-    joint_mass_matrix_emulated_.diagonal() << 0.05,0.05,0.05,0.05,0.05,0.05,0.05;
+    //joint_mass_matrix_emulated_.diagonal() << 0,0,0,0,0,0,0;
+    joint_mass_matrix_emulated_.diagonal() << 0.05,0.05,0.05,0.05,0.05,0.01,0.001;
 
     //watchdogkv_ << 9,9,9,9,1,1,1;
     watchdogkv_ << 0,0,0,0,0,0,0;
     //additional virtual damping:
-    kd_ << 0.1,0.1,0.1,0.1,0.1,0.1,0.5;
-    //kd_ << 5,5,5,5,2,2,2,2;
+
     dq_ << 0,0,0,0,0,0,0;
     ddq_ << 0,0,0,0,0,0,0;
 
@@ -261,9 +264,8 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     K_.setZero();
     rosKflat_next.setZero();
     rosTaud_next << 0,0,0,0,0,0,0;
-    rosQd_next = q_;
+    rosQd_next = qd_;
     rosDQd_next << 0,0,0,0,0,0,0;
-
 
 
 }
@@ -289,6 +291,14 @@ void PDController::onStart() {
         
         qd_ = q_;
         dqd_ = dq_;
+        tau_cmd_unlimited_.setZero();
+        tau_cmd_unlimited_unfiltered_.setZero();
+        tau_cmd_limited_.setZero();
+        taud_ee.setZero();
+        taud_last_.setZero();
+        taud_.setZero();
+        desired_force_torque.setZero();
+        desired_mass_wrench.setZero();
 }
 
 void PDController::service(const franka::RobotState& robot_state, const franka::Duration period) {
@@ -387,6 +397,9 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
             ee_state.htransform[i] = robot_state.O_T_EE[i];
         }
         ee_publisher.publish(ee_state);
+
+        //ROS_DEBUG_STREAM(joint_mass_matrix.format(CleanFmt) << sep);
+        //ROS_DEBUG_STREAM(kdl_chain.getSegment(2).getInertia().getMass() << sep);
         
         
     }
@@ -416,14 +429,20 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     
     /*if no recent goal was posted, do some damage control*/
     if(watchdog_timeout < franka_time){ // ToDo goal_time + 500ms too long?
-        if(watchDogTriggered == false) ROS_ERROR_STREAM(myName << ": Nobody is sending me updates!! Stopping for safety.");
-        watchDogTriggered = true;
-        /*keep the position-goal(?), but slow down*/
-        K_.setZero();
-        for (int i=0; i<dofs; i++) {K_(flattenIndex(0,i), flattenIndex(1,i)) = watchdogkv_(i);}
         taud_.setZero();
         dqd_.setZero();
-        //qd_ = q_; // hold position
+        K_.setZero();
+        for (int i=0; i<dofs; i++) {K_(flattenIndex(0,i), flattenIndex(1,i)) = watchdogkv_(i);}
+        if(watchDogTriggered == false) {
+            ROS_ERROR_STREAM(myName << ": Nobody is sending me updates!! Stopping for safety.");
+            qd_ = q_;
+            rosKflat_next = K_;
+            rosQd_next = qd_;
+            rosDQd_next = dqd_;
+            rosTaud_next = taud_;
+        } // goal is wherever i a currently am
+        watchDogTriggered = true;
+        /*keep the position-goal(?), but slow down*/
     }
     
 }
@@ -461,7 +480,7 @@ franka::Torques PDController::update(const franka::RobotState& robot_state, cons
     DOFVector tau_error =  Kp_ * (qd_ - q_).matrix() +  Kv_ * (dqd_ - dq_).matrix() - (kd_ * dq_).matrix();
 
     //inertia compensation:
-    tau_inertia_ = (joint_mass_matrix-joint_mass_matrix_emulated_) * ddq_.matrix();
+    DOFVector tau_inertia_ = (joint_mass_matrix-joint_mass_matrix_emulated_) * ddq_.matrix();
     
     DOFVector tau_border = torque_border_*(
                 -1*q_.sign()*(zero_line_.max((q_ - max_border_)))
