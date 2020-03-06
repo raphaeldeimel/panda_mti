@@ -143,21 +143,21 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
     myName = rosnode.getNamespace();
 
-    common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("/panda/currentstate", 10);
+    common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("currentstate", 10);
 
-    ee_publisher = rosnode.advertise<panda_msgs_mti::RobotEEState>("/panda/currentEEstate", 10);
+    ee_publisher = rosnode.advertise<panda_msgs_mti::RobotEEState>("currentEEstate", 10);
 
-    pdcontroller_goal_listener_ = rosnode.subscribe("/panda/pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
-    desiredmstate_listener_ = rosnode.subscribe("/panda/desiredmechanicalstate", 5, &PDController::callbackDesiredMechanicalState, this);
+    pdcontroller_goal_listener_ = rosnode.subscribe("pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
+    desiredmstate_listener_ = rosnode.subscribe("desiredmechanicalstate", 5, &PDController::callbackDesiredMechanicalState, this);
 
-    std::vector <double> v;
+    std::vector <double> v;    
     rosnode.getParam("torque_bias", v);
     if (v.size() != dofs) {
       ROS_WARN_STREAM(myName << ": torque_bias length is " << v.size() << " instead of " << dofs << ", ignoring it.");
     } else {
       for (int i=0; i<dofs; i++) {tau_bias[i] = v[i];}
     }
-
+    
     rosnode.getParam("torque_stiction", v);
     if (v.size() != dofs) {
       ROS_WARN_STREAM(myName << ": torque_stiction length is " << v.size() << " instead of " << dofs << ", ignoring it.");

@@ -87,7 +87,7 @@ Convenience Template for instantiating and running a specific controller class:
 int mainloopImpl(franka::Robot&, ControllerInterface* ControllerInterfaceImpl);
 template < class ControllerInterfaceImpl > int mainloop()  {
   int retval=1;
-  ros::NodeHandle rosnode("~");
+  ros::NodeHandle rosnode("");
   //get your params from ros config/launchfiles
   std::string hostname;
 

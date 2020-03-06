@@ -1,27 +1,13 @@
 <?xml version="1.0" ?>
 
 <launch>
-  <arg name="for_real" default="true"/>
-  <arg name="load_netft" default="true"/>
-  <arg name="load_gripper" default="true" />
-  <arg name="robot_ip" default="robot.franka.de" />
-  <arg name="publish_rate" default="30" />
-  
 
-  
-  
-  <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand_alt_dyn.urdf.xacro"/>
-  <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand_alt_dyn.urdf.xacro" />
+  <include file='$(dirname)/test.launch'>
+    <arg name="controller_executable" value="pdcontroller_gripper_netft" />
+    <arg name="gripper_present" default="true" />
+    <arg name="netft_present" default="true" />
+  </include>
 
-  <node     if="$(arg for_real)"   name="pdcontroller_gripper_netft" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="pdcontroller_gripper_netft" required="true"  output="screen" >
-    <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />
-  </node>
-  
-  
-  <node unless="$(arg for_real)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-    <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand_alt_dyn.urdf.xacro"/>
-    <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand_alt_dyn.urdf.xacro" />
-    <param  if="$(arg load_gripper)" name="publish_default_positions" value="true" />
-  </node>
+<!--  <node unless="$(arg for_real)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find phastapromp)/launch/runBehavior.rviz"/>-->
 
 </launch>

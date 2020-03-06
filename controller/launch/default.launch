@@ -2,20 +2,16 @@
 
 <launch>
   <arg name="for_real" default="true"/>
-  <arg name="gripper_present" default="true" />
-  <arg name="netft_present" default="true" />
+  <arg name="gripper_present" default="true" /> <!-- Due to ROS limitation, we need to set this extra. Make sure this is the same as in the config yaml -->
   <arg name="publish_rate" default="30" />
   <arg name="controller_executable" default="pdcontroller_gripper_netft" />
   
   <group ns="panda1">
-      <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" />
-      <!-- Override the yaml parameters so that controllers different to the default can be tested:  -->
-      <param name="withGripper" value="$(arg gripper_present)"/>
-      <param name="withNetft" value="$(arg netft_present)"/>
+      <!--Get all config parameters from a yaml file whose name is the mac address of the robot: -->
+      <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" /> 
 
       <param if="$(arg gripper_present)"     name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand_alt_dyn.urdf.xacro" />
       <param unless="$(arg gripper_present)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_alt_dyn.urdf.xacro"/>
-
 
       <node     if="$(arg for_real)"   name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="true"  output="screen" />
       <node unless="$(arg for_real)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
