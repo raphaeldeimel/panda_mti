@@ -22,7 +22,7 @@ public:
 
     bool isTorqueController() const  override {return true;};
 
-    void onStart();
+    void onStart() override;
 
     //Control loop callback
     franka::Torques update(const franka::RobotState& robot_state, const franka::Duration period) override;
