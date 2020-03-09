@@ -100,9 +100,9 @@ while not rospy.is_shutdown():
         j.position[7]   = 0.5*currentRobotGoal.position[7]
         j.velocity[7]   = 0.5*currentRobotGoal.velocity[7]
         j.effort[7]     =     currentRobotGoal.torque[7]
-        j.position[8]   = j2.position[7]
-        j.velocity[8]   = j2.velocity[7]
-        j.effort[8]     = j2.position[7] 
+        j.position[8]   = j.position[7]
+        j.velocity[8]   = j.velocity[7]
+        j.effort[8]     = j.position[7] 
         j.header.stamp = currentRobotGoal.stamp
         currentRobotGoal = None
         publisher_expected.publish(j)
