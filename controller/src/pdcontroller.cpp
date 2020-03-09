@@ -159,15 +159,16 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     if (v.size() != dofs) {
       ROS_WARN_STREAM(myName << ": torque_bias length is " << v.size() << " instead of " << dofs << ", ignoring it.");
     } else {
-      for (int i=0; i<dofs; i++) {tau_bias[i] = v[i];}
+      for (int i=0; i<dofs; i++) {rostau_bias[i] = v[i];}
     }
-    
+    tau_bias = rostau_bias;
     rosnode.getParam("torque_stiction", v);
     if (v.size() != dofs) {
       ROS_WARN_STREAM(myName << ": torque_stiction length is " << v.size() << " instead of " << dofs << ", ignoring it.");
     } else {
-      for (int i=0; i<dofs; i++) {tau_stiction[i] = v[i];}
+      for (int i=0; i<dofs; i++) {rostau_stiction[i] = v[i];}
     }
+    tau_stiction = rostau_stiction;
 
     //kd_ << 0.1,0.1,0.1,0.1,0.1,0.1,0.5;
     rosnode.getParam("damping", v);
@@ -212,8 +213,12 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     //joint_mass_matrix_emulated_.diagonal() << 0,0,0,0,0,0,0;
     joint_mass_matrix_emulated_.diagonal() << 0.05,0.05,0.05,0.05,0.05,0.01,0.001;
 
-    //watchdogkv_ << 9,9,9,9,1,1,1;
-    watchdogkv_ << 0,0,0,0,0,0,0;
+    rosnode.param<bool>("watchdog_do_damping", watchDogDoDamping, true);
+    if (watchDogDoDamping) {
+        watchdogkv_ << 9,9,9,9,1,1,1;
+    } else {
+        watchdogkv_ << 0,0,0,0,0,0,0;
+    }
     //additional virtual damping:
 
     dq_ << 0,0,0,0,0,0,0;
@@ -301,6 +306,8 @@ void PDController::onStart() {
 }
 
 void PDController::service(const franka::RobotState& robot_state, const franka::Duration period) {
+
+    franka_time += period;
 
     DOFVector dq_last = dq_;
     qd_last_ = qd_;
@@ -396,7 +403,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
             ee_state.htransform[i] = robot_state.O_T_EE[i];
         }
         ee_publisher.publish(ee_state);
-
+    
         //ROS_DEBUG_STREAM(joint_mass_matrix.format(CleanFmt) << sep);
         //ROS_DEBUG_STREAM(kdl_chain.getSegment(2).getInertia().getMass() << sep);
         
@@ -415,6 +422,35 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     }
 
 
+    /*if no recent goal was posted, do some damage control*/
+    if(watchdog_timeout <= franka_time){ 
+        qd_ = q_;
+        taud_.setZero();
+        dqd_.setZero();
+        K_.setZero();
+        for (int i=0; i<dofs; i++) {K_(flattenIndex(0,i), flattenIndex(1,i)) = watchdogkv_(i);}
+        rosKflat_next = K_;
+        rosQd_next = q_;
+        rosDQd_next.setZero();
+        rosTaud_next.setZero();
+        if(watchDogTriggered == false) {
+            ROS_INFO_STREAM(myName << ": Nobody is sending me updates!! Stopping for safety.");
+            if (watchDogDoDamping){
+                tau_stiction.setZero();
+                tau_bias.setZero();
+            }
+        } // goal is wherever i a currently am
+        watchDogTriggered = true;
+        /*keep the position-goal(?), but slow down*/
+    } else {
+        if(watchDogTriggered == true) {
+            tau_bias = rostau_bias;
+            tau_stiction = rostau_stiction;
+            ROS_INFO_STREAM(myName << ": Leaving Watchdog mode.");
+        }
+        watchDogTriggered = false;
+    }
+
     //interpolate between previous and next desired ros values:
     int64_t dt_msec = period.toMSec();
     double i  = (double) dt_msec / (timeUntilNextUpdate+0.00001); //compute the relative step size
@@ -425,32 +461,15 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     taud_ = taud_ + i* (rosTaud_next - taud_);
     timeUntilNextUpdate = std::max(int64_t(0), timeUntilNextUpdate - dt_msec); //adjust the remaining interpolation time
     
-    
-    /*if no recent goal was posted, do some damage control*/
-    if(watchdog_timeout < franka_time){ // ToDo goal_time + 500ms too long?
-        taud_.setZero();
-        dqd_.setZero();
-        K_.setZero();
-        for (int i=0; i<dofs; i++) {K_(flattenIndex(0,i), flattenIndex(1,i)) = watchdogkv_(i);}
-        if(watchDogTriggered == false) {
-            ROS_ERROR_STREAM(myName << ": Nobody is sending me updates!! Stopping for safety.");
-            qd_ = q_;
-            rosKflat_next = K_;
-            rosQd_next = qd_;
-            rosDQd_next = dqd_;
-            rosTaud_next = taud_;
-        } // goal is wherever i a currently am
-        watchDogTriggered = true;
-        /*keep the position-goal(?), but slow down*/
-    }
-    
+
+
+
 }
 
 
 
 franka::Torques PDController::update(const franka::RobotState& robot_state, const franka::Duration period) {
 
-     franka_time += period;
 
     service(robot_state, period); //get current values, communicate with ros
     

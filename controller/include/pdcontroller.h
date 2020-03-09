@@ -54,6 +54,8 @@ protected:
     const double payload_filter_gain{0.001};
 
     //Params from ROS:
+    DOFVector rostau_bias;
+    DOFVector rostau_stiction;
     DOFVector tau_bias;
     DOFVector tau_stiction;
 
@@ -97,7 +99,8 @@ protected:
     //watchdog functionality:
     DOFVector watchdogkv_;          //kv to use when watchdog is active
     bool watchDogTriggered = true; // --> Timeout
-    const franka::Duration watchdogPeriod = franka::Duration(500);
+    bool watchDogDoDamping = true;
+    const franka::Duration watchdogPeriod = franka::Duration(150);
     franka::Duration watchdog_timeout;
 
     //limits:

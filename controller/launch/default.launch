@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
   <arg name="arm_id" default="panda_left"/>   
-  <arg name="for_real" default="true"/>
+  <arg name="watchdog_do_damping" default="False" />  <!-- Set this to true if you want the watchdog to stop the robot / keep it from floating -->
   <arg name="gripper_present" default="true" /> <!-- Due to ROS limitation, we need to set this extra. Make sure this is the same as in the config yaml -->
   <arg name="publish_rate" default="50" />
   <arg name="controller_executable" default="pdcontroller_gripper_netft" />
@@ -13,7 +13,8 @@
   <param unless="$(arg gripper_present)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm.urdf.xacro arm_id:=$(arg arm_id)"/>
   <param name="arm_id" value="$(arg arm_id)" />
 
-  <node     if="$(arg for_real)"   name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="false"  output="screen" />
-  <node unless="$(arg for_real)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <param name="watchdog_do_damping" value="$(arg watchdog_do_damping)" />
+
+  <node name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="false"  output="screen" />
  
 </launch>
