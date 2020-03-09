@@ -1,8 +1,8 @@
 torque_bias:
-- -0.0 # joint 1
-- 0.0 # joint 2
+- -0.1 # joint 1
+- -0.1 # joint 2
 - -0.0 # joint 3
-- 0.2 # joint 4
+- 0.1 # joint 4
 - 0.0 # joint 5
 - 0.0 # joint 6
 - 0.0 # joint 7
@@ -10,10 +10,18 @@ torque_stiction:
 - 0.45 # joint 1
 - 0.45 # joint 2
 - 0.35 # joint 3
-- 0.38 # joint 4
+- 0.55 # joint 4
 - 0.33 # joint 5
 - 0.22 # joint 6
 - 0.2 # joint 7
+damping:
+- -0.3 # joint 1
+- -0.3 # joint 2
+- -0.3 # joint 3
+- -0.6 # joint 4
+- -0.4 # joint 5
+- -0.05 # joint 6
+- -0.1 # joint 7
 name: 'panda-5'
 panda_address: "panda"
 netft_address: "192.168.11.3"
