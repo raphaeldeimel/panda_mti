@@ -1,4 +1,4 @@
-
+.vscode/
 *.pyc
 
 panda_dynamics_model/build/
