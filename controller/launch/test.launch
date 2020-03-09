@@ -15,6 +15,9 @@
 
       <param if="$(arg gripper_present)"     name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand_alt_dyn.urdf.xacro" />
       <param unless="$(arg gripper_present)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_alt_dyn.urdf.xacro"/>
+<!--      <param if="$(arg gripper_present)"     name="robot_description" command="$(find xacro)/xacro  $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />-->
+<!--      <param unless="$(arg gripper_present)" name="robot_description" command="$(find xacro)/xacro  $(find franka_description)/robots/panda_arm.urdf.xacro"/>-->
+
 
 
       <node     if="$(arg for_real)"   name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="true"  output="screen" />
