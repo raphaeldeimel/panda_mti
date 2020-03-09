@@ -6,7 +6,6 @@
 #include <kdl_parser/kdl_parser.hpp>
 #include <pdcontroller.h>
 
-
 //for debug prints:
 std::string sep = "\n----------------------------------------\n";
 Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
@@ -183,14 +182,14 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
     std::string robot_desc_string;
     rosnode.param("robot_description", robot_desc_string, std::string());
-
+    std::string arm_id_string;
+    rosnode.param("arm_id", arm_id_string, std::string());
+    
     bool success;
     success = kdl_parser::treeFromString(robot_desc_string, kdl_tree);
     if (!success) {ROS_ERROR_STREAM(myName <<": Failed to construct kdl tree from parameter robot_description");
     } else {
-        success = kdl_tree.getChain("panda_link0",
-                                "panda_link8",
-                                kdl_chain);
+        success = kdl_tree.getChain(arm_id_string + "_link0", arm_id_string + "_link8" ,kdl_chain);
     }
     if (!success) {
            ROS_ERROR_STREAM(myName <<": Failed to get chain panda_link1 to panda_link8 from KDL tree");

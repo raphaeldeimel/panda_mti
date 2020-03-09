@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda">
-  <xacro:property name="use_alt_dyn_params" value="True" />
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="$(arg arm_id)">
+  <xacro:arg name="arm_id" default="$(arg arm_id)" />
   <xacro:include filename="$(find panda_dynamics_model)/urdf/panda_arm_plus_inertial.xacro" />
   <xacro:include filename="$(find franka_description)/robots/hand.xacro" />
   <xacro:panda_arm safety_distance="0.03"/> 
