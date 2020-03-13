@@ -93,7 +93,7 @@ template < class ControllerInterfaceImpl > int mainloop()  {
 
   //delete this in the future:
   if (rosnode.param<std::string>("/panda/hostname",hostname, "panda" )) {
-    ROS_WARN("Using /panda/hostname is deprecated. Please set panda_address as a private parameter instead!");
+    ROS_WARN("Using /panda/hostname is deprecated. Please set panda_address as a local parameter instead!");
   }
 
   rosnode.param<std::string>("panda_address",hostname, "panda" );
