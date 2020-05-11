@@ -18,8 +18,7 @@
 #include <ros/time.h>
 #include <ros/console.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <panda_msgs_mti/RobotState8.h>
-#include <panda_msgs_mti/RobotEEState.h> 
+#include <panda_msgs_mti/RobotState.h>
 #include <panda_msgs_mti/MechanicalStateDistribution8TorquePosVel.h> 
 #include <sensor_msgs/JointState.h>
 

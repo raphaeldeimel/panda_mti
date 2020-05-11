@@ -22,7 +22,7 @@ import rosparam
 import rosbag
 import rospy
 from sensor_msgs.msg import JointState
-from panda_msgs_mti.msg import RobotState8, PDControllerGoal8, MechanicalStateDistribution8TorquePosVel
+from panda_msgs_mti.msg import RobotState, PDControllerGoal8, MechanicalStateDistribution8TorquePosVel
 
 jointStateMsgnames = ["panda_joint1", "panda_joint2", "panda_joint3", "panda_joint4", "panda_joint5", "panda_joint6", "panda_joint7", "panda_finger_joint1", "panda_finger_joint2"]
 
@@ -46,7 +46,7 @@ def callbackCurrentMSD(data):
 
 
 rospy.init_node('controller2jointstatemsgs')
-listener = rospy.Subscriber("currentstate", RobotState8, callbackCurrentState  , queue_size=1)
+listener = rospy.Subscriber("currentstate", RobotState, callbackCurrentState  , queue_size=1)
 publisher_expected = rospy.Publisher("joint_states_expected", JointState, queue_size=3)
 publisher_real = rospy.Publisher("joint_states", JointState, queue_size=3)
 

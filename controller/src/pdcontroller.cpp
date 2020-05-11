@@ -147,9 +147,7 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
     myName = rosnode.getNamespace();
 
-    common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState8>("currentstate", 10);
-
-    ee_publisher = rosnode.advertise<panda_msgs_mti::RobotEEState>("currentEEstate", 10);
+    common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState>("currentstate", 10);
 
     pdcontroller_goal_listener_ = rosnode.subscribe("pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);
     desiredmstate_listener_ = rosnode.subscribe("desiredmechanicalstate", 5, &PDController::callbackDesiredMechanicalState, this);
@@ -347,9 +345,10 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
     if (state_culling_count-- <= 0) {
         state_culling_count = publisher_culling_amount;
         ros::Time now  = ros::Time::now();
-        panda_msgs_mti::RobotState8 statemsg = panda_msgs_mti::RobotState8();
+        panda_msgs_mti::RobotState statemsg = panda_msgs_mti::RobotState();
         statemsg.stamp = now;
         statemsg.mode = (int)robot_state.robot_mode;
+        statemsg.dofs = dofs;
         for (int i=0;i<dofs;i++) { statemsg.q[i]   = q_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dq[i]  = dq_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.ddq[i]  = ddq_.coeff(i);}
@@ -358,7 +357,10 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         for (int i=0;i<dofs;i++) { statemsg.qd[i]  = qd_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dqd[i] = dqd_.coeff(i);}
 
-        for (int i=0;i<6;i++) {statemsg.ee_ft[i] = rdtdata_[i];}
+        for (int i=0;i<16;i++) {statemsg.ee_htransform_base[i] = robot_state.O_T_EE[i];}
+        for (int i=0;i<6;i++) {statemsg.ee_wrench_ee[i] = rdtdata_[i];}
+        for (int i=0;i<42;i++) {statemsg.ee_jacobian_ee[i] = jacobian_array_ee_[i];}
+        //for (int i=0;i<16;i++) {statemsg.ee_dotjacobian_ee[i] = ???} //TODO: implement with KDL
 
         statemsg.q[dofs]   = gripper_q;
         statemsg.dq[dofs]  = 0.0;
@@ -389,24 +391,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         transformStamped.transform.rotation.w = ee_quaternion.w();
      
         tf_broadcaster.sendTransform(transformStamped);
-        
-        //publish end effector jacobian in base frame:
-        panda_msgs_mti::RobotEEState ee_state;
-        ee_state.stamp = now;
-        for (int i=0; i < 42; i++) {
-            ee_state.jacobian_base[i] = jacobian_array_[i];
-        }
-        for (int i=0; i < 42; i++) {
-            ee_state.jacobian_ee[i] = jacobian_array_ee_[i];
-        }
-        for (int i=0; i < 42; i++) {
-            ee_state.jacobian_base[i] = jacobian_array_[i];
-        }
-        for (int i=0; i < 16; i++) {
-            ee_state.htransform[i] = robot_state.O_T_EE[i];
-        }
-        ee_publisher.publish(ee_state);
-    
+            
         //ROS_DEBUG_STREAM(joint_mass_matrix.format(CleanFmt) << sep);
         //ROS_DEBUG_STREAM(kdl_chain.getSegment(2).getInertia().getMass() << sep);
         
