@@ -15,7 +15,6 @@
 #include "ros/ros.h"
 #include <ros/time.h>
 #include <panda_msgs_mti/PDControllerGoal8.h> //ros message types
-#include <panda_msgs_mti/RobotState8.h>
 #include <sensor_msgs/JointState.h>
 
 
