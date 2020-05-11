@@ -59,6 +59,10 @@ protected:
     DOFVector tau_bias;
     DOFVector tau_stiction;
 
+    //params derived from ROS params:
+    std::string frame_id_base;
+    std::string frame_id_ee;
+    
     //Values from ROS:
     DOFVector rosTaud_next;
     DOFVector rosQd_next;

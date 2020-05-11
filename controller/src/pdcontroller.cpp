@@ -186,6 +186,9 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
     std::string arm_id_string;
     rosnode.param("arm_id", arm_id_string, std::string());
     
+    frame_id_base =  arm_id_string + "_link0";
+    frame_id_ee =  arm_id_string + "_EE";
+
     bool success;
     success = kdl_parser::treeFromString(robot_desc_string, kdl_tree);
     if (!success) {ROS_ERROR_STREAM(myName <<": Failed to construct kdl tree from parameter robot_description");
@@ -368,8 +371,8 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         //create and publish an end effector frame:
         geometry_msgs::TransformStamped transformStamped;
         transformStamped.header.stamp = now;
-        transformStamped.header.frame_id = "panda_link0";
-        transformStamped.child_frame_id = "panda_EE";
+        transformStamped.header.frame_id = frame_id_base;
+        transformStamped.child_frame_id = frame_id_ee;
         transformStamped.transform.translation.x = robot_state.O_T_EE[12];
         transformStamped.transform.translation.y = robot_state.O_T_EE[13];
         transformStamped.transform.translation.z = robot_state.O_T_EE[14];
