@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>panda_msgs_mti</name>
+  <version>0.1.0</version>
+  <description>message definitions used by software interfacing to the panda_mti stack </description>
+
+  <maintainer email="info@mti-engage.tu-berlin.de">MTI-engAge</maintainer>
+  <license>BSD</license>
+
+  <url type="website">mti-engage.tu-berlin.de</url>
+  <url type="repository">mti-engage.tu-berlin.de</url>
+  <author>MTI</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>message_generation</depend>
+  <depend>std_msgs</depend>
+  <build_depend>sensor_msgs</build_depend>
+
+  <build_export_depend>message_runtime</build_export_depend>
+
+  <depend>geometry_msgs</depend>
+  <exec_depend>message_runtime</exec_depend>
+  <build_depend>sensor_msgs</build_depend>
+  
+</package>
