@@ -147,6 +147,12 @@ PDController::PDController(franka::Robot& robot, std::string& hostname, ros::Nod
 
     myName = rosnode.getNamespace();
 
+    //check if configuration was intended for a simulation/emulation node and fail loudly to avoid accidental misconfiguration.
+    bool is_not_real;
+    rosnode.param<bool>("is_not_real", is_not_real, false);
+    if (is_not_real) { ROS_FATAL_STREAM(myName << "Loaded Configuration was intended for simulation only!");
+    }
+
     common_state_publisher = rosnode.advertise<panda_msgs_mti::RobotState>("currentstate", 10);
 
     pdcontroller_goal_listener_ = rosnode.subscribe("pdcontroller_goal", 5, &PDController::callbackPDControllerGoal, this);

@@ -1,14 +1,16 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="arm_id" default="panda_left" doc="name of the controlled robot. Will set tf and joint prefixes, as well as the namespace for topics related to this robot" />   
+  <arg name="arm_id" default="robot" doc="name of the controlled robot. Will set tf and joint prefixes, as well as the namespace for topics related to this robot" />   
+  <arg name="arm_mac" default="$(optenv PANDA_MAC emulated)" doc="mac address of the robot. Use the script getHardwareID.sh to set PANDA_MAC automatically" />   
   <arg name="watchdog_do_damping" default="False" doc="Set this to true if you want the watchdog to stop the robot / keep it from floating" /> 
   <arg name="gripper_present" default="true" doc="Whether gripper is present on robot. Make sure this is the same as in the robot's config yaml" />
   <arg name="publish_rate" default="50" />
   <arg name="controller_executable" default="pdcontroller_gripper_netft" />  
   <arg name="emulated" default="false" doc="Set to true if you don't have an actual robot connected, run on a virtual robot instead"/>
   
+  
   <!--Get all config parameters from a yaml file whose name is the mac address of the robot: -->
-  <rosparam command="load" file="$(find controller_panda_mti)/config/$(optenv PANDA_MAC simulated).yaml" /> 
+  <rosparam command="load" file="$(find controller_panda_mti)/config/$(arg arm_mac).yaml" /> 
 
   <param if="$(arg gripper_present)"     name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand.urdf.xacro arm_id:=$(arg arm_id)" />
   <param unless="$(arg gripper_present)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm.urdf.xacro arm_id:=$(arg arm_id)"/>

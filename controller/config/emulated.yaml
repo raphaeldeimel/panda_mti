@@ -14,8 +14,10 @@ torque_stiction:
 - -0.01  # joint 5
 - -0.01  # joint 6
 - -0.01  # joint 7
-name: 'panda-simulated'
+name: 'panda-emulated'
+is_not_real: true
 panda_address: "localhost"
 netft_address: "127.0.0.1"
 withNetft: True
 withGripper: True
+

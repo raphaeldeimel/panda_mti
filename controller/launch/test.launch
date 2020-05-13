@@ -1,15 +1,7 @@
 <?xml version="1.0" ?>
 
 <launch>
-  <arg name="arm_id" default="panda_test"/>
-  <arg name="for_real" default="true"/>
-  <arg name="gripper_present" default="true" />
-  <arg name="netft_present" default="true" />
-  <arg name="publish_rate" default="30" />
-  <arg name="controller_executable" default="pdcontroller_gripper_netft" />
-  
   <group ns="test">
       <include file="$(dirname)/default.launch"/>
-  </group>
- 
+  </group> 
 </launch>
