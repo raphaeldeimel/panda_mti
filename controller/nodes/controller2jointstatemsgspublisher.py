@@ -24,7 +24,6 @@ import rospy
 from sensor_msgs.msg import JointState
 from panda_msgs_mti.msg import RobotState, PDControllerGoal8, MechanicalStateDistribution8TorquePosVel
 
-jointStateMsgnames = ["panda_joint1", "panda_joint2", "panda_joint3", "panda_joint4", "panda_joint5", "panda_joint6", "panda_joint7", "panda_finger_joint1", "panda_finger_joint2"]
 
 currentRobotState = None
 def callbackCurrentState(data):
@@ -60,8 +59,10 @@ listener3 = rospy.Subscriber("pdcontroller_goal_simulation", PDControllerGoal8, 
 
 
 arm_id = rospy.get_param('arm_id')
-jointStateMsgnames_suffices = ["_joint1", "_joint2", "_joint3", "_joint4", "_joint5", "_joint6", "_joint7", "_finger_joint1", "_finger_joint2"]
-jointStateMsgnames = [arm_id+sfx for sfx in jointStateMsgnames_suffices]
+jointStateMsgnames_suffixes = ["_joint1", "_joint2", "_joint3", "_joint4", "_joint5", "_joint6", "_joint7", "_finger_joint1", "_finger_joint2"]
+jointStateMsgnames = [arm_id+sfx for sfx in jointStateMsgnames_suffixes]
+
+print(jointStateMsgnames)
 
 j = JointState()
 j.name = jointStateMsgnames

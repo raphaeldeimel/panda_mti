@@ -1,0 +1,21 @@
+torque_bias:
+- 0.0 # joint 1
+- 0.0 # joint 2
+- 0.0 # joint 3
+- 0.0 # joint 4
+- 0.0 # joint 5
+- 0.0 # joint 6
+- 0.0 # joint 7
+torque_stiction:
+- -0.01  # joint 1
+- -0.01  # joint 2
+- -0.01  # joint 3
+- -0.01  # joint 4
+- -0.01  # joint 5
+- -0.01  # joint 6
+- -0.01  # joint 7
+name: 'panda-simulated'
+panda_address: "localhost"
+netft_address: "127.0.0.1"
+withNetft: True
+withGripper: True

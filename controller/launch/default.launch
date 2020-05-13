@@ -1,13 +1,14 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="arm_id" default="panda_left"/>   
-  <arg name="watchdog_do_damping" default="False" />  <!-- Set this to true if you want the watchdog to stop the robot / keep it from floating -->
-  <arg name="gripper_present" default="true" /> <!-- Due to ROS limitation, we need to set this extra. Make sure this is the same as in the config yaml -->
+  <arg name="arm_id" default="panda_left" doc="name of the controlled robot. Will set tf and joint prefixes, as well as the namespace for topics related to this robot" />   
+  <arg name="watchdog_do_damping" default="False" doc="Set this to true if you want the watchdog to stop the robot / keep it from floating" /> 
+  <arg name="gripper_present" default="true" doc="Whether gripper is present on robot. Make sure this is the same as in the robot's config yaml" />
   <arg name="publish_rate" default="50" />
-  <arg name="controller_executable" default="pdcontroller_gripper_netft" />
+  <arg name="controller_executable" default="pdcontroller_gripper_netft" />  
+  <arg name="emulated" default="false" doc="Set to true if you don't have an actual robot connected, run on a virtual robot instead"/>
   
   <!--Get all config parameters from a yaml file whose name is the mac address of the robot: -->
-  <rosparam command="load" file="$(find controller_panda_mti)/config/$(env PANDA_MAC).yaml" /> 
+  <rosparam command="load" file="$(find controller_panda_mti)/config/$(optenv PANDA_MAC simulated).yaml" /> 
 
   <param if="$(arg gripper_present)"     name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm_hand.urdf.xacro arm_id:=$(arg arm_id)" />
   <param unless="$(arg gripper_present)" name="robot_description" command="$(find xacro)/xacro  $(find panda_dynamics_model)/urdf/panda_arm.urdf.xacro arm_id:=$(arg arm_id)"/>
@@ -15,6 +16,8 @@
 
   <param name="watchdog_do_damping" value="$(arg watchdog_do_damping)" />
 
-  <node name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="false"  output="screen" />
+  <!-- Actual controller talking to robot hardware, or if emulation is active, the fake/emulated robot -->
+  <node unless="$(arg emulated)" name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="false"  output="screen" />
+  <node     if="$(arg emulated)" name="pdcontrolleremulator" pkg="controller_panda_mti" type="pdcontrolleremulationnode.py"  output="screen" />
  
 </launch>

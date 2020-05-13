@@ -75,16 +75,19 @@ import subprocess
 
 class PandaURDFModel():
 
-    def __init__(self, robotDescriptionString=None):
+    def __init__(self, robotDescriptionString=None, arm_id='panda'):
         if robotDescriptionString is None:
-            self.urdf_string = _rospy.get_param('/robot_description')
+            self.urdf_string = _rospy.get_param('robot_description')
+            self.arm_id = _rospy.get_param('arm_id')
         else:
             self.urdf_string = robotDescriptionString
-        self.baseLinkName = 'panda_link0'
-        self.eeLinkName = 'panda_link7'
+            self.arm_id = arm_id            
+        print(self.urdf_string)
+        self.baseLinkName = "{}_link0".format(self.arm_id)
+        self.eeLinkName = "{}_link7".format(self.arm_id)
         isSuccessful, self.kdltree = _kdl_parser.treeFromString(self.urdf_string)
         if not isSuccessful:
-            raise RuntimeError("could not parse '/robot_description'")
+            raise RuntimeError("could not parse 'robot_description'")
         self.ee_chain = self.kdltree.getChain(self.baseLinkName, self.eeLinkName)
         self.fk_ee = _kdl.ChainFkSolverPos_recursive(self.ee_chain)
         self.jointposition = _kdl.JntArray(7)
@@ -98,8 +101,11 @@ class PandaURDFModel():
         #dynamics: (needs masses added to urdf!)
         self.grav_vector = _kdl.Vector(0., 0., -9.81)  
         self.dynParam = _kdl.ChainDynParam(self.ee_chain, self.grav_vector)
-        self.inertiaMatrix = _kdl.JntSpaceInertiaMatrix(7)
+        self.inertiaMatrix_kdl = _kdl.JntSpaceInertiaMatrix(7)
+        self.inertiaMatrix = _np.eye((8))
 
+        viscuousFriction = [ 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5] #TODO: load from URDF
+        self.viscuousFriction = _np.array(viscuousFriction)
         
     def setJointPosition(self, jointPosition):
         for i in range(7):
@@ -134,8 +140,14 @@ class PandaURDFModel():
         return np_jac
         
     def getInertiaMatrix(self):
-        self.dynParam.JntToMass(self.jointposition, self.inertiaMatrix)
+        self.dynParam.JntToMass(self.jointposition, self.inertiaMatrix_kdl)
+        for row in range(7):
+            for col in range(7):
+                self.inertiaMatrix[row, col]= self.inertiaMatrix_kdl[row, col]
         return self.inertiaMatrix
+
+    def getViscuousFrictionCoefficients(self):
+        return self.viscuousFriction
 
 
     def getXrefT(self, jointpose, r=2, g=2):

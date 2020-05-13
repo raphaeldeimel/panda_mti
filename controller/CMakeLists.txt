@@ -22,10 +22,11 @@ find_package(catkin REQUIRED COMPONENTS
   kdl_parser
 )
 
-find_package(orocos_kdl REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(Franka 0.3.0 REQUIRED)
+find_package(orocos_kdl)
+find_package(Eigen3)
+find_package(Franka 0.3.0)
 
+#SET(Franka_FOUND false)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -34,6 +35,11 @@ catkin_package(
     tf2
     tf2_ros
 )
+
+
+
+
+IF( ${Franka_FOUND} AND ${Eigen3_FOUND} AND ${orocos_kdl_FOUND})
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 
@@ -110,7 +116,6 @@ target_include_directories(statepublisher PUBLIC
 )
 
 
-
 ## Installation
 install(TARGETS pdcontroller
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -126,5 +131,6 @@ install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-
-
+ELSE()
+    MESSAGE(WARNING "Skipping Controller compilation due to missing dependencies, you may still use the emulated controller node. (libfranka:${Franka_FOUND}, libeigen3:${Eigen3_FOUND}, orocos_kdl:${orocos_kdl} )")
+ENDIF()

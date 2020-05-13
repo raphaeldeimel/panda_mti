@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<!-- This launches nodes to publish link frames for both actual and expected(goal) position of the robot arm. Use it as a visualization addon to default.launch-->
+<launch>
+  <arg name="arm_id" default="panda_left" doc="name of the controlled robot. Will set tf and joint prefixes, as well as the namespace for topics related to this robot" />   
+
+  <node name="controller2jointstatemsgs" pkg="controller_panda_mti" type="controller2jointstatemsgspublisher.py"  output="screen" required="true"/>
+
+  <node name="robot_tf_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <node name="expected_tf_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <remap from="joint_states" to="joint_states_expected"/>
+    <param name="tf_prefix" value='expected'/>
+  </node>
+ 
+</launch>
