@@ -25,10 +25,28 @@ pdcontroller: Controls only the robot arm
 gripper:      Also manage gripper 
 netft:        Also read in netft data 
 
+## Package msgs_panda_mti
+
+Contains the ROS message API to the PD controller node.
+
+We use monolithic, custom robot status and pd control goal messages, so all data of a time step are sent together for simpler sychronization.
+
+To convert robot status messages to standard ROS joint messages (e.g. to convert those to link frames), use controller2jointstatemsgspublisher node from controller_panda_mti 
 
 ## Package panda_dynamics_model
 
 Contains a URDF model annotated with dynamics parameters, and a small python class to compute Jacobians, Inertia matrices etc. 
+
+## Package franka_description
+
+Package containing the meshes and URDFs for the Panda robot
+
+Note: This package is derived from Franka-Emika's fanka_ros, because of this it uses a different licence (Apache) than all the other packages in this repository (BSD)
+
+Differences to franka_ros:
+    - Support for multiple robot arms / multiple poses of the robot arm
+    - Added dynamics parameters to URDF
+    - copy avoids dependency on the complete franka_ros stack
 
 
 ## Package panda_friction
@@ -67,7 +85,7 @@ roslaunch controller_panda_mti test_pdcontroller.launch
     
 ## Licences
 
-Please note that the subdirectory franka_description is copied verbatim from franka_ros
-https://github.com/frankaemika/franka_ros/ for convenience. It is licenced under Apache 2.0, wheras the rest of the repository is licenced under a BSD lincene (see LICENCE for details)
+Please note that the subdirectory franka_description is dervied from franka_ros
+https://github.com/frankaemika/franka_ros/ . It is licenced under Apache 2.0, wheras the rest of the repository is licenced under a BSD license (see LICENCE for details)
 
 
