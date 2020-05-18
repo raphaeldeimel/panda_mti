@@ -179,7 +179,7 @@ def ControllerGoalCallback(data):
     goalTime = newgoalTime
     kp[:] = newkp
     kv[:] = newkv
-    kd[:] = 0
+    kd[:] = 1.0  #intrinsic damping of the robot
 
 
 #publisher for the emulated robot pose:
@@ -206,6 +206,7 @@ currentStateMsg.ee_jacobian_ee = [0] * 42
 currentStateMsg.ee_dotjacobian_ee = [0] * 42
 currentStatePublisher = rospy.Publisher("currentstate", RobotState,  queue_size=3)
 
+torques = _np.zeros((dofs))
 
 rospy.loginfo('starting up.')
 while not rospy.is_shutdown():
@@ -220,7 +221,7 @@ while not rospy.is_shutdown():
         watchDogTriggered = True
         goal[iTau,:] = 0.0
         goal[iVel,:] = 0.0
-        kp[:] = 0
+        kp[:] = 1.
         kv[:] = 0
         kd[:] = 1.
     else:
@@ -244,13 +245,14 @@ while not rospy.is_shutdown():
     goal[iVel,dofs-1] = 0.0
     goal[iTau,dofs-1] = 0.0
 
-    
+
     #emulate the pd control:
     #PD control law:
     for i in range(substeps):
         delta = goal - currentJointState
-        torques = ktau * goal[iTau,:] + kp * delta[iPos,:] + kv * delta[iVel,:] - kd * currentJointState[iVel,:]
+        torques_unfiltered = ktau * goal[iTau,:] + kp * delta[iPos,:] + kv * delta[iVel,:] - kd * currentJointState[iVel,:]
         
+        torques += 0.333 * (torques_unfiltered-torques) #torque rate limited by hardware
         #compute dynamics:
         urdfModel.setJointPosition(currentJointState[iPos,:])
         
