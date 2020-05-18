@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
-project(franka_description)
+project(franka_description_mti)
 
 find_package(catkin REQUIRED)
 catkin_package(CATKIN_DEPENDS xacro)

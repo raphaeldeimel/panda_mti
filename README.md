@@ -37,7 +37,7 @@ To convert robot status messages to standard ROS joint messages (e.g. to convert
 
 Contains a URDF model annotated with dynamics parameters, and a small python class to compute Jacobians, Inertia matrices etc. 
 
-## Package franka_description
+## Package franka_description_mti
 
 Package containing the meshes and URDFs for the Panda robot
 
@@ -85,7 +85,7 @@ roslaunch controller_panda_mti test_pdcontroller.launch
     
 ## Licences
 
-Please note that the subdirectory franka_description is dervied from franka_ros
+Please note that the subdirectory franka_description_mti is dervied from franka_ros
 https://github.com/frankaemika/franka_ros/ . It is licenced under Apache 2.0, wheras the rest of the repository is licenced under a BSD license (see LICENCE for details)
 
 

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>franka_description</name>
-  <version>0.7.0-panda_mti0</version>
-  <description>franka_description contains URDF files and meshes of Franka Emika robots</description>
+  <name>franka_description_mti</name>
+  <version>0.7.0</version>
+  <description>franka_description_mti contains URDF files and meshes of Franka Emika robots</description>
   <maintainer email="raphael.deimel@tu-berlin.de">Raphael Deimel</maintainer>
   <license>Apache 2.0</license>
 
