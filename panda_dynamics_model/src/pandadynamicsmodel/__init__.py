@@ -1,3 +1,3 @@
 __all__ = ['_pandadynamicsmodel']
-from _pandadynamicsmodel import *
+from ._pandadynamicsmodel import *
 
