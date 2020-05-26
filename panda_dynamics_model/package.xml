@@ -41,7 +41,8 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <buildtool_depend> panda_msgs_mti </buildtool_depend>
-
+  <run_depend> urdfdom-py </run_depend>
+  <run_depend> kdl_parser_py </run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
