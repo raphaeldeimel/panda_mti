@@ -82,7 +82,6 @@ class PandaURDFModel():
         else:
             self.urdf_string = robotDescriptionString
             self.arm_id = arm_id            
-        print(self.urdf_string)
         self.baseLinkName = "{}_link0".format(self.arm_id)
         self.eeLinkName = "{}_link7".format(self.arm_id)
         isSuccessful, self.kdltree = _kdl_parser.treeFromString(self.urdf_string)
