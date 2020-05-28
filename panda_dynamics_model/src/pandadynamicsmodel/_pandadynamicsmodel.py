@@ -102,6 +102,8 @@ class PandaURDFModel():
         self.dynParam = _kdl.ChainDynParam(self.ee_chain, self.grav_vector)
         self.inertiaMatrix_kdl = _kdl.JntSpaceInertiaMatrix(7)
         self.inertiaMatrix = _np.eye((8))
+        self.gravity_torques_kdl = _kdl.JntArray(7)
+        self.gravity_torques = _np.zeros((8))
 
         viscuousFriction = [ 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5] #TODO: load from URDF
         self.viscuousFriction = _np.array(viscuousFriction)
@@ -148,6 +150,11 @@ class PandaURDFModel():
     def getViscuousFrictionCoefficients(self):
         return self.viscuousFriction
 
+    def getGravityTorques(self):
+        self.dynParam.JntToGravity(self.jointposition,self.gravity_torques_kdl)
+        for row in range(7):
+            self.gravity_torques[row] = self.gravity_torques_kdl[row]
+        return self.gravity_torques
 
     def getXrefT(self, jointpose, r=2, g=2):
         """
