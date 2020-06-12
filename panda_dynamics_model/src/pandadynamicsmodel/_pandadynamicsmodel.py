@@ -90,6 +90,7 @@ class PandaURDFModel():
         self.ee_chain = self.kdltree.getChain(self.baseLinkName, self.eeLinkName)
         self.fk_ee = _kdl.ChainFkSolverPos_recursive(self.ee_chain)
         self.jointposition = _kdl.JntArray(7)
+        self.jointvelocity = _kdl.JntArray(7)
         self.eeFrame = _kdl.Frame()
         # Calculate the jacobian expressed in the base frame of the chain, with reference point at the end effector of the *chain.
         # http://docs.ros.org/hydro/api/orocos_kdl/html/classKDL_1_1ChainJntToJacSolver.html#details
@@ -109,10 +110,23 @@ class PandaURDFModel():
         self.viscuousFriction = _np.array(viscuousFriction)
         
     def setJointPosition(self, jointPosition):
+        """
+        set the joint's positions
+        """
+        if len(jointPosition.shape) != 1:
+            raise ValueError(jointPosition.shape)
+        jointPosition = jointPosition.tolist()
         for i in range(7):
             self.jointposition[i] = jointPosition[i]
 #        self.jointposition[7] = jointPosition[7] # I don't get what use the gripper would have here
 
+    def setJointVelocity(self, jointVelocity):
+        """
+        set the joint's velocities
+        """
+        for i in range(7):
+            self.jointvelocity[i] = jointVelocity[i].item()
+#        self.jointposition[7] = jointPosition[7] # I don't get what use the gripper would have here
         
     def getEELocation(self):
         self.fk_ee.JntToCart(self.jointposition, self.eeFrame)
@@ -146,6 +160,12 @@ class PandaURDFModel():
             for col in range(7):
                 self.inertiaMatrix[row, col]= self.inertiaMatrix_kdl[row, col]
         return self.inertiaMatrix
+
+    def getInertiaMatrixInverse(self):
+        self.getInertiaMatrix()
+        self.inertiaMatrixInverse = _np.linalg.inv(self.inertiaMatrix)
+        return self.inertiaMatrixInverse
+
 
     def getViscuousFrictionCoefficients(self):
         return self.viscuousFriction
