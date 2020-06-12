@@ -18,17 +18,27 @@ Features:
 
 ## Special installation notes for Ubuntu 20.04
 
-In Ubuntu 20.04, the package of PyKDL 1.4.0-7 is broken (exception on unicode string conversion). One can work around though by installing debian's updated package:
+In Ubuntu 20.04, the package of PyKDL 1.4.0-7 is broken (exception on unicode string conversion), and subsequently, kdl_parser_py is missing in the noetic distribution
 
-wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl1.4_1.4.0-9_amd64.deb <http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb>
+Until things are fixed, one can work around though by installing debian's updated package:
+```
+wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl1.4_1.4.0-9_amd64.deb 
 sudo dpkg --install liborocos-kdl1.4_1.4.0-9_amd64.deb
 
-wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl-dev1.4_1.4.0-9_amd64.deb <http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb>
+wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl-dev1.4_1.4.0-9_amd64.deb 
 sudo dpkg --install liborocos-kdl-dev1.4_1.4.0-9_amd64.deb
 
-wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb <http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb>
+wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb
 sudo dpkg --install python3-pykdl_1.4.0-9_amd64.deb 
+```
 
+One also has to install the ros package kdl_parser_py manually until it is distributed with noetic. In your workspace's src/, do:
+
+```
+cd yourworkspace/src
+git clone -b noetic-devel https://github.com/ros/kdl_parser
+catkin build
+```
 
 ## Package controller_panda_mti
 
