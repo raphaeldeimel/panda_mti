@@ -22,21 +22,26 @@ In Ubuntu 20.04, the package of PyKDL 1.4.0-7 is broken (exception on unicode st
 
 Until things are fixed, one can work around though by installing debian's updated package:
 ```
-wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl1.4_1.4.0-9_amd64.deb 
+wget http://ftp.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl1.4_1.4.0-9_amd64.deb 
 sudo dpkg --install liborocos-kdl1.4_1.4.0-9_amd64.deb
 
-wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl-dev1.4_1.4.0-9_amd64.deb 
+wget http://ftp.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl-dev_1.4.0-9_amd64.deb 
 sudo dpkg --install liborocos-kdl-dev1.4_1.4.0-9_amd64.deb
 
-wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb
+wget http://ftp.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb
 sudo dpkg --install python3-pykdl_1.4.0-9_amd64.deb 
 ```
 
-One also has to install the ros package kdl_parser_py manually until it is distributed with noetic. In your workspace's src/, do:
+
+One also has to install the ros package kdl_parser_py manually until it is distributed properly within noetic. #
+In your workspace's src/, do:
 
 ```
+apt-get download ros-noetic-urdfdom-py
+sudo dpkg -i ros-noetic-urdfdom-py_*.deb
 cd yourworkspace/src
 git clone -b noetic-devel https://github.com/ros/kdl_parser
+rm kdl_parser/kdl_parser_py/CATKIN_IGNORE
 catkin build
 ```
 
