@@ -16,6 +16,19 @@ Features:
 - Include dynamics parameters from IROS'19 system identification paper
 
 
+## Special installation notes for Ubuntu 20.04
+
+In Ubuntu 20.04, the package of PyKDL 1.4.0-7 is broken (exception on unicode string conversion). One can work around though by installing debian's updated package:
+
+wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl1.4_1.4.0-9_amd64.deb <http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb>
+sudo dpkg --install liborocos-kdl1.4_1.4.0-9_amd64.deb
+
+wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/liborocos-kdl-dev1.4_1.4.0-9_amd64.deb <http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb>
+sudo dpkg --install liborocos-kdl-dev1.4_1.4.0-9_amd64.deb
+
+wget http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb <http://deb.debian.org/debian/pool/main/o/orocos-kdl/python3-pykdl_1.4.0-9_amd64.deb>
+sudo dpkg --install python3-pykdl_1.4.0-9_amd64.deb 
+
 
 ## Package controller_panda_mti
 
