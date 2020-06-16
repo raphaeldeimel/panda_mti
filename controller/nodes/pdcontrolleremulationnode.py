@@ -119,10 +119,10 @@ currentJointState = _np.zeros((mechanicalStateCount, dofs))
 currentJointState[iPos,:] = rospy.get_param('initial state', 0.0)
 
 goal = _np.array(currentJointState)
-kp = _np.zeros((dofs))
-kv = _np.zeros((dofs))
-kd = _np.full((dofs), 15.0)
-ktau = _np.ones((dofs))
+kp = _np.zeros((dofs, dofs))
+kv = _np.zeros((dofs, dofs))
+kd = 15.0 * _np.eye(dofs)
+ktau = _np.eye(dofs)
 watchDogTriggered=True
 startTime = rospy.Time.now() - rospy.Duration(dt)
 goalTime = startTime
@@ -137,10 +137,18 @@ def ControllerGoalCallback(data):
     newgoal[iTau,:] = data.torque
     newgoal[iPos,:] = data.position
     newgoal[iVel,:] = data.velocity
-    newkp = _np.empty((dofs))
-    newkp[:] = data.kp
-    newkv = _np.empty((dofs))
-    newkv[:] = data.kv
+    if len(data.kp) == dofs:
+        newkp  = _np.diagflat(data.kp)
+    elif len(data.kp) == dofs*dofs:
+        newkp  = _np.array(data.kp).reshape((dofs, dofs))
+    else:
+        rospy.logerr(f"kp has wrong length: is {len(data.kp)}, should be {dofs} or {dofs*dofs}")
+    if len(data.kv) == dofs:
+        newkv  = _np.diagflat(data.kv)
+    elif len(data.kv) == dofs*dofs:
+        newkv  = _np.array(data.kv).reshape((dofs, dofs))
+    else:
+        rospy.logerr(f"kv has wrong length: is {len(data.kv)}, should be {dofs} or {dofs*dofs}")
     
     #for safety: limit positions:
     posLimited = _np.clip(newgoal[iPos,:], jointposmin, jointposmax)
@@ -177,9 +185,9 @@ def ControllerGoalCallback(data):
     #publish new goal data:
     goal = goal + delta
     goalTime = newgoalTime
-    kp[:] = newkp
-    kv[:] = newkv
-    kd[:] = 1.0  #intrinsic damping of the robot
+    kp[...] = newkp
+    kv[...] = newkv
+    kd[...] = 1.0 * _np.eye(dofs)  #intrinsic damping of the robot
 
 
 #publisher for the emulated robot pose:
@@ -221,9 +229,9 @@ while not rospy.is_shutdown():
         watchDogTriggered = True
         goal[iTau,:] = 0.0
         goal[iVel,:] = 0.0
-        kp[:] = 1.
-        kv[:] = 0
-        kd[:] = 1.
+        kp[...] = 1.0 * _np.eye(dofs)
+        kv[...] = 0.0
+        kd[...] = 1.0 * _np.eye(dofs)
     else:
         if watchDogTriggered == True:
             watchDogTriggered = False
@@ -250,7 +258,7 @@ while not rospy.is_shutdown():
     #PD control law:
     for i in range(substeps):
         delta = goal - currentJointState
-        torques_unfiltered = ktau * goal[iTau,:] + kp * delta[iPos,:] + kv * delta[iVel,:] - kd * currentJointState[iVel,:]
+        torques_unfiltered = ktau @ goal[iTau,:] + kp @ delta[iPos,:] + kv @ delta[iVel,:] - kd @ currentJointState[iVel,:]
         
         torques += 0.333 * (torques_unfiltered-torques) #torque rate limited by hardware
         #compute dynamics:
@@ -304,7 +312,7 @@ while not rospy.is_shutdown():
 
     # check if jacobian has right size 6x7
     if not len(currentStateMsg.ee_jacobian_ee) == 42:
-        rospy.logerr("Emulated jacobian has size %d, but should have 42.", len(currentEEStateMsg.jacobian_ee))
+        rospy.logerr("Emulated jacobian has size %d, but should have 42.", len(currentStateMsg.ee_jacobian_ee))
 
     # convert numpy to column major format list
     pos_count = 0

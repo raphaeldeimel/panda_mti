@@ -31,7 +31,7 @@ std::array<double, 7> limitRate(const std::array<double, 7>& max_derivatives,
 void PDController::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGoal8::ConstPtr& msg)
 {
 
-
+    
     timeUntilNextUpdate = rosExpectedUpdatePeriod; //reset interpolation interval
     watchdog_timeout = franka_time +  watchdogPeriod; //reset watchdog
 
@@ -39,10 +39,34 @@ void PDController::callbackPDControllerGoal(const panda_msgs_mti::PDControllerGo
     for (int i=0;i<dofs;i++) {  rosTaud_next(i) = msg->torque[i];}
     for (int i=0;i<dofs;i++) {  rosQd_next(i) = msg->position[i];}
     for (int i=0;i<dofs;i++) {  rosDQd_next(i) = msg->velocity[i];}
-    rosKflat_next.setZero(); 
-    for (int d=0;d<dofs_ros;d++) { rosKflat_next(flattenIndex(0,d), flattenIndex(0,d)) = msg->kp[d];}
-    for (int d=0;d<dofs_ros;d++) { rosKflat_next(flattenIndex(0,d), flattenIndex(1,d)) = msg->kv[d];}
     
+    rosKflat_next.setZero(); 
+    if (msg->kp.size() == dofs_ros) { //treat as vector
+        for (int d=0;d<dofs_ros;d++) { rosKflat_next(d, flattenIndex(0,d)) = msg->kp[d];}
+    } else if (msg->kp.size() == dofs_ros*dofs_ros) { //treat as matrix
+        for (int d2=0;d2<dofs_ros;d2++) { 
+           for (int d=0;d<dofs_ros;d++) { 
+                rosKflat_next(d2,flattenIndex(0, d)) = msg->kp[flattenIndex(d2, d)];
+            }
+        }
+    } else {
+        ROS_ERROR("Received malformed PDControllerGoal8 message, ignoring.");
+        return;
+    }
+
+    if (msg->kv.size() == dofs_ros) { //treat as vector
+        for (int d=0;d<dofs_ros;d++) { rosKflat_next(d, flattenIndex(1,d)) = msg->kv[d];}
+    } else if (msg->kv.size() == dofs_ros*dofs_ros) { //treat as matrix
+        for (int d=0;d<dofs_ros;d++) { 
+            for (int d2=0;d2<dofs_ros;d2++) { 
+                rosKflat_next(d2,flattenIndex(1, d)) = msg->kv[flattenIndex(d2, d)];
+            }
+        }
+    } else {
+        ROS_ERROR("Received malformed PDControllerGoal8 message, ignoring.");
+        return;
+    }
+
     //set future desired values
     rosKflat_next   = rosKflat_next.min(maxK_).max(minK_);
     rosQd_next   = rosQd_next.min(maxjointposition_).max(minjointposition_);

@@ -39,7 +39,7 @@ typedef Eigen::Matrix<double, 7,7> MassMatrix;
 typedef std::array<double, 49> MassMatrixBuffer;
 typedef Eigen::Map<MassMatrix > MassMatrixMapped;
 
-typedef Eigen::Array<double, 1*dofs_ros, 2*dofs_ros> GainsMatrix;
+typedef Eigen::Array<double, dofs_ros, 2*dofs_ros> GainsMatrix;
 
 //Mechanical State Distribution Declarations:
 const int MechanicalstateIndexTorque = 0;

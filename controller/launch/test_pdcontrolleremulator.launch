@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+  <include file='$(dirname)/default.launch'>
+    <arg name="emulated" value="true" />
+    <arg name="gripper_present" default="false" />
+  </include>
+
+<!--  <node unless="$(arg for_real)" pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find phastapromep)/launch/runBehavior.rviz"/>-->
+</launch>
