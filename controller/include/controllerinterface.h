@@ -33,7 +33,7 @@ typedef Eigen::Map<Eigen::Array<double, dofs, 1> > DOFVectorMapped;
 typedef Eigen::Matrix<double, 6,1> Wrench;
 
 typedef std::array<double, 42> JacobianBuffer;
-typedef Eigen::Map<Eigen::Matrix<double, 6,1> > JacobianMapped;
+typedef Eigen::Map<Eigen::Matrix<double, 6,7> > JacobianMapped;
 
 typedef Eigen::Matrix<double, 7,7> MassMatrix;
 typedef std::array<double, 49> MassMatrixBuffer;
