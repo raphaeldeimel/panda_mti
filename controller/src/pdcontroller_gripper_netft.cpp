@@ -41,7 +41,7 @@ PDControllerGripperNetft::PDControllerGripperNetft(franka::Robot& robot, std::st
         } catch (const franka::Exception& ex) {
             ROS_ERROR_STREAM(myName << ": Gripper not responding." << ex.what() << std::endl);
             return;
-        }        
+        }
     }    
 
     if (withGripper) {ROS_INFO_STREAM(myName << ": gripper enabled");}
@@ -60,7 +60,12 @@ PDControllerGripperNetft::~PDControllerGripperNetft()
 void PDControllerGripperNetft::service(const franka::RobotState& robot_state, const franka::Duration period)
 {
     if (ptrNetft != NULL)  {ptrNetft->getData(&PDController::rdtdata_[0]);}
-    if (withGripper) {gripper_q =  grippernonblocking::getGripperPosition();}
+    for (int i=0; i<6; i++) {measured_force_torque_ee(i) = rdtdata_[i];}
+    try {
+        if (withGripper) {gripper_q =  grippernonblocking::getGripperPosition();}
+    } catch (const franka::CommandException& ex) {
+        ROS_ERROR_STREAM(myName << ": franka::CommandException in service(). ignoring it." << ex.what() << std::endl);
+    }        
     PDController::service(robot_state, period);
 }
 
@@ -70,7 +75,11 @@ franka::Torques PDControllerGripperNetft::update(const franka::RobotState& robot
 {
     gripper_q =  grippernonblocking::getGripperPosition();
     franka::Torques t = PDController::update(robot_state, period);
-    grippernonblocking::setGripperDesired(rosGripperQd, 10.0); // taud_[7]
+    try {
+        grippernonblocking::setGripperDesired(rosGripperQd, 10.0); // taud_[7]
+    } catch (const franka::CommandException& ex) {
+        ROS_ERROR_STREAM(myName << ": franka::CommandException in update(). ignoring it." << ex.what() << std::endl);
+    } 
     return t;
 }
 

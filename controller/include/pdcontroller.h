@@ -143,6 +143,7 @@ protected:
     DOFVectorMapped dq_;
     DOFVectorMapped tau_ext_hat;
     DOFVector ddq_;
+    
 
     std::array<double, 6*dofs> jacobian_array_;
     JacobianMapped jacobian;
@@ -167,8 +168,10 @@ protected:
     DOFVector dqd_;
     Wrench desired_force_torque;
     Wrench desired_mass_wrench;
+    Wrench measured_force_torque_ee;
     DOFVector taud_;  // desired torque
     DOFVector taud_ee; //torques to create end effector forces
+    DOFVector tau_ee;  //torque that comes from the end effector
     DOFVector taud_last_; // was commanded last
     DOFVector tau_cmd_unlimited_unfiltered_;
     DOFVector tau_cmd_unlimited_;

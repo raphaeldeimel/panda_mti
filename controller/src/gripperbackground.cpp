@@ -37,29 +37,34 @@ static bool gripperCommunicatorExitRequested = false;
 //function to run in separate thread
 void gripperCommunicator(franka::Gripper* gripper)
 {
-    const float gripper_polling_interval=0.1;
+    const float gripper_polling_interval=0.5;
     static float gripper_polling_interval_counter=0.0;
     static bool isGripperOpen = false;
-    while (!gripperCommunicatorExitRequested) {
-        if (gripper != NULL) {
-            desiredValues desired = commandedExternally.load(std::memory_order_seq_cst);
-            if (desired.q >= threshold_open && !isGripperOpen) {
-                currentGripperPosition.store(q_max);
-                gripper->move(q_max, dq_max);
-                isGripperOpen  =true;
-            }
-            if (desired.q <= threshold_close && isGripperOpen) {
-                currentGripperPosition.store(0.0);
-                gripper->grasp(0.0, dq_max, desired.tau , 0.2, 0.2); 
-                isGripperOpen=false;
-            }
-            
-            franka::GripperState newState = gripper->readOnce();
-            currentGripperPosition.store(newState.width);
+    try {
+        while (!gripperCommunicatorExitRequested) {
+            if (gripper != NULL) {
+                desiredValues desired = commandedExternally.load(std::memory_order_seq_cst);
+                if (desired.q >= threshold_open && !isGripperOpen) {
+                    currentGripperPosition.store(q_max);
+                    gripper->move(q_max, dq_max);
+                    isGripperOpen  =true;
+                }
+                if (desired.q <= threshold_close && isGripperOpen) {
+                    currentGripperPosition.store(0.0);
+                    gripper->grasp(0.0, dq_max, desired.tau , 0.2, 0.2); 
+                    isGripperOpen=false;
+                }
+                
+                franka::GripperState newState = gripper->readOnce();
+                currentGripperPosition.store(newState.width);
 
+            }
+            nanosleep(&gripperPollingPeriod, NULL);
         }
-        nanosleep(&gripperPollingPeriod, NULL);
-    }
+    } catch (const franka::CommandException& ex) {
+        ROS_ERROR_STREAM(ex.what() << std::endl);
+    }        
+
 }
 
 float getGripperPosition() {

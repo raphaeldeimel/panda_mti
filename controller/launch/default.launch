@@ -19,7 +19,7 @@
   <param name="watchdog_do_damping" value="$(arg watchdog_do_damping)" />
 
   <!-- Actual controller talking to robot hardware, or if emulation is active, the fake/emulated robot -->
-  <node unless="$(arg emulated)" name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="false"  output="screen" />
+  <node unless="$(arg emulated)" name="pdcontroller" pkg="controller_panda_mti"   launch-prefix="chrt -f 40"  type="$(arg controller_executable)" required="true"  output="screen" />
   <node     if="$(arg emulated)" name="pdcontrolleremulator" pkg="controller_panda_mti" type="pdcontrolleremulationnode.py"  output="screen" />
  
 </launch>

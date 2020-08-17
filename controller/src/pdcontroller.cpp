@@ -371,6 +371,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         coriolis_vector_ = pModel->coriolis(robot_state);
     }
 
+    tau_ee << jacobian.transpose() * measured_force_torque_ee.matrix(); //do this if you have an F/T
 
     if (state_culling_count-- <= 0) {
         state_culling_count = publisher_culling_amount;
@@ -382,7 +383,7 @@ void PDController::service(const franka::RobotState& robot_state, const franka::
         for (int i=0;i<dofs;i++) { statemsg.q[i]   = q_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dq[i]  = dq_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.ddq[i]  = ddq_.coeff(i);}
-        for (int i=0;i<dofs;i++) { statemsg.tau[i] = tau_cmd_ext_.coeff(i);}
+        for (int i=0;i<dofs;i++) { statemsg.tau[i] = tau_ee.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.tau_ext[i] = tau_ext_hat.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.qd[i]  = qd_.coeff(i);}
         for (int i=0;i<dofs;i++) { statemsg.dqd[i] = dqd_.coeff(i);}

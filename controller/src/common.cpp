@@ -115,6 +115,7 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
     }
     
     //Keep running depending on the panda state, 
+    try {
     do {
         robot_state = robot.readOnce();
         robotmode = robot_state.robot_mode;
@@ -148,6 +149,11 @@ int mainloopImpl(franka::Robot& robot, ControllerInterface* cntrl)
         }
         idleLoopRate.sleep();
     } while (not exitrequested);
+
+    } catch (const franka::CommandException& ex) {  //when e.g. pressing the stop button, control exits via an exception
+        ROS_ERROR_STREAM(currentController->myName << ": franka::CommandException: " << ex.what() << std::endl);
+        throw ex;
+    }
 
     std::string modestr = "unknown";
     switch (robotmode) {
